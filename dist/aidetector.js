@@ -534,6 +534,10 @@ ${s} > u[data-kind="${kind}"] { background: ${p[kind].accent}; }`).join("");
       editor.setProgressState(true);
       try {
         const result = await send(text);
+        const current = editor.removed ? null : collectBlocks(editor.getBody());
+        if (!current || current.map((block) => block.text).join("\n") !== text) {
+          return;
+        }
         if (result?.status === "too_short") {
           notify(t("The text is too short to check. Add a few more sentences."));
         } else if (result?.status === "unsupported_language") {
@@ -541,7 +545,7 @@ ${s} > u[data-kind="${kind}"] { background: ${p[kind].accent}; }`).join("");
         } else if (result?.status === "ok") {
           mount();
           visible = true;
-          state = { text, result, marks: marksFor(blocks, result) };
+          state = { text, result, marks: marksFor(current, result) };
           paint();
           const kind = kindOf(result) ?? "unsure";
           notify(`${t(LABEL[kind])} \xB7 ${t("AI {0}%", percent(result.ai_fraction))}`, kind === "human" ? "success" : "warning");
@@ -550,10 +554,14 @@ ${s} > u[data-kind="${kind}"] { background: ${p[kind].accent}; }`).join("");
         }
         editor.dispatch("AiDetectorResult", { result });
       } catch (e) {
-        notify(e?.message || t(ERRORS[e?.status] || "The AI check failed. Try again later."), "error");
+        if (!editor.removed) {
+          notify(e?.message || t(ERRORS[e?.status] || "The AI check failed. Try again later."), "error");
+        }
       } finally {
         busy = false;
-        editor.setProgressState(false);
+        if (!editor.removed) {
+          editor.setProgressState(false);
+        }
       }
     }
     editor.on("input change undo redo SetContent", () => {

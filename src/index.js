@@ -165,6 +165,15 @@ export default function plugin(editor) {
         try {
             const result = await send(text)
 
+            // The editor went away, or its text was replaced (setContent from code) while the answer was on its way: the answer
+            // is for text that no longer exists, so it is dropped rather than drawn on the wrong blocks. Same text in new elements
+            // (setContent with the same HTML) is fine: the marks go on the blocks that are there now.
+            const current = editor.removed ? null : collectBlocks(editor.getBody())
+
+            if (!current || current.map((block) => block.text).join('\n') !== text) {
+                return
+            }
+
             if (result?.status === 'too_short') {
                 notify(t('The text is too short to check. Add a few more sentences.'))
             } else if (result?.status === 'unsupported_language') {
@@ -172,7 +181,7 @@ export default function plugin(editor) {
             } else if (result?.status === 'ok') {
                 mount()
                 visible = true
-                state = { text, result, marks: marksFor(blocks, result) }
+                state = { text, result, marks: marksFor(current, result) }
                 paint()
 
                 const kind = kindOf(result) ?? 'unsure'
@@ -184,10 +193,15 @@ export default function plugin(editor) {
 
             editor.dispatch('AiDetectorResult', { result })
         } catch (e) {
-            notify(e?.message || t(ERRORS[e?.status] || 'The AI check failed. Try again later.'), 'error')
+            if (!editor.removed) {
+                notify(e?.message || t(ERRORS[e?.status] || 'The AI check failed. Try again later.'), 'error')
+            }
         } finally {
             busy = false
-            editor.setProgressState(false)
+
+            if (!editor.removed) {
+                editor.setProgressState(false)
+            }
         }
     }
 
