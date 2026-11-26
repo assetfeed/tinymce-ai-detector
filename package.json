@@ -1,0 +1,24 @@
+{
+  "name": "@assetfeed/tinymce-ai-detector",
+  "version": "0.1.0",
+  "description": "AI writing check for TinyMCE and HugeRTE: marks likely AI-written passages next to the text, without touching the content.",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/aidetector.js",
+  "module": "src/index.js",
+  "exports": {
+    ".": { "import": "./src/index.js", "default": "./dist/aidetector.js" },
+    "./plugin.min.js": "./dist/aidetector.min.js"
+  },
+  "files": ["src", "dist"],
+  "keywords": ["tinymce", "tinymce-plugin", "hugerte", "hugerte-plugin", "ai-detector", "ai-content-detector", "ai-writing"],
+  "repository": { "type": "git", "url": "git+https://github.com/assetfeed/tinymce-ai-detector.git" },
+  "homepage": "https://github.com/assetfeed/tinymce-ai-detector#readme",
+  "peerDependencies": { "tinymce": ">=6", "hugerte": ">=1" },
+  "peerDependenciesMeta": { "tinymce": { "optional": true }, "hugerte": { "optional": true } },
+  "scripts": {
+    "build": "esbuild src/index.js --bundle --format=iife --outfile=dist/aidetector.js && esbuild src/index.js --bundle --format=iife --minify --outfile=dist/aidetector.min.js",
+    "test": "node --test test/*.test.js"
+  },
+  "devDependencies": { "esbuild": "^0.24.0" }
+}

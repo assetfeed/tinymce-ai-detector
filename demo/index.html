@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI detector plugin demo</title>
+<style>
+  body { margin: 0; padding: 24px 16px 48px; background: #f6f7f8; color: #111827; font: 15px/1.5 ui-sans-serif, system-ui, sans-serif; }
+  main { max-width: 860px; margin: 0 auto; }
+  h1 { margin: 0 0 4px; font-size: 22px; }
+  h2 { margin: 32px 0 8px; font-size: 17px; }
+  p.lead { margin: 0 0 8px; color: #4b5563; }
+  a { color: #111827; }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/tinymce@8.10.2/tinymce.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hugerte@1.0.15/hugerte.min.js"></script>
+<script src="../dist/aidetector.js"></script>
+</head>
+<body>
+<main>
+  <h1>AI detector plugin demo</h1>
+  <p class="lead">Press the scan button in the toolbar. This page replays a recorded answer of the AssetFeed detector for the sample text, so it works without an API key; edited text needs a real key.</p>
+  <p class="lead">Sample text: the opening of <i>Three Men in a Boat</i> by Jerome K. Jerome (1889, public domain), followed by three paragraphs written by an AI model.</p>
+
+  <h2>TinyMCE 8</h2>
+  <textarea id="tinymce-editor"></textarea>
+
+  <h2>HugeRTE 1</h2>
+  <textarea id="hugerte-editor"></textarea>
+</main>
+<script>
+  const sample = fetch('sample.txt').then((r) => r.text())
+  const answer = fetch('sample-result.json').then((r) => r.json())
+
+  // The recorded answer for the sample text; any other text gets a message instead of a made-up result.
+  async function replay({ text }) {
+    const lines = (await sample).trim().split('\n').map((l) => l.replace(/\s+/g, ' ').trim()).join('\n')
+    await new Promise((resolve) => setTimeout(resolve, 700))
+    if (text !== lines) {
+      throw new Error('This demo only replays the answer for the sample text. Set aidetector_api_key or aidetector_endpoint to check your own text.')
+    }
+    return answer
+  }
+
+  const config = {
+    plugins: 'aidetector lists link',
+    toolbar: 'undo redo | blocks | bold italic | bullist numlist | aidetector aidetectormarks',
+    menubar: false,
+    height: 520,
+    aidetector_request: replay,
+  }
+
+  sample.then((text) => {
+    const html = text.trim().split('\n').map((l) => `<p>${l.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</p>`).join('')
+    tinymce.init({ ...config, selector: '#tinymce-editor', license_key: 'gpl', init_instance_callback: (e) => e.setContent(html) })
+    hugerte.init({ ...config, selector: '#hugerte-editor', init_instance_callback: (e) => e.setContent(html) })
+  })
+</script>
+</body>
+</html>
