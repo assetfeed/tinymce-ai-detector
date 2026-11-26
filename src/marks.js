@@ -5,9 +5,10 @@
  * The answer's windows name the lines they cover by number, so line i is block i of collectBlocks().
  */
 
-const BLOCKS = 'p,h1,h2,h3,h4,h5,h6,li,blockquote,td,th'
+// The elements that hold a line of text: div too, for editors set to forced_root_block: 'div'.
+const BLOCKS = 'p,h1,h2,h3,h4,h5,h6,li,blockquote,td,th,div,pre,dt,dd,figcaption,caption,address'
 
-// A nested list inside a list item: the item is marked and sent for its own lines only.
+// A nested list inside a list item: the item's marks cover its own lines before it.
 const INNER = /^(UL|OL|TABLE|BLOCKQUOTE|P|DIV|H[1-6])$/
 
 // A block this short carries no signal of its own; it only inherits its window's verdict.
@@ -20,25 +21,35 @@ export const innerBlock = (el) => Array.from(el.children).find((child) => INNER.
 
 const collapse = (s) => s.replace(/\s+/g, ' ').trim()
 
+/**
+ * The block's own text: everything in it except the blocks nested in it, which are lines of their own. A <br> and a nested
+ * block both leave a space, so "First<br>Second" is not sent as "FirstSecond" and the text after a nested list is kept.
+ */
 function ownText(el) {
-    const inner = innerBlock(el)
+    let out = ''
 
-    if (!inner) {
-        return el.textContent
+    const walk = (node) => {
+        for (const child of node.childNodes) {
+            if (child.nodeType === 3) {
+                out += child.data
+            } else if (child.nodeType === 1) {
+                if (child.tagName === 'BR' || child.matches(BLOCKS)) {
+                    out += ' '
+                } else {
+                    walk(child)
+                }
+            }
+        }
     }
 
-    const range = el.ownerDocument.createRange()
+    walk(el)
 
-    range.selectNodeContents(el)
-    range.setEndBefore(inner)
-
-    return range.toString()
+    return out
 }
 
 /** The blocks of the text in document order, each with the line sent for it: [{ el, text }]. */
 export function collectBlocks(root) {
     return Array.from(root.querySelectorAll(BLOCKS))
-        .filter((el) => el.tagName === 'LI' || !el.querySelector(BLOCKS))
         .map((el) => ({ el, text: collapse(ownText(el)) }))
         .filter((block) => block.text !== '')
 }

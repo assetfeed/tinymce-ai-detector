@@ -58,24 +58,32 @@
   }
 
   // src/marks.js
-  var BLOCKS = "p,h1,h2,h3,h4,h5,h6,li,blockquote,td,th";
+  var BLOCKS = "p,h1,h2,h3,h4,h5,h6,li,blockquote,td,th,div,pre,dt,dd,figcaption,caption,address";
   var INNER = /^(UL|OL|TABLE|BLOCKQUOTE|P|DIV|H[1-6])$/;
   var MIN_MARK_WORDS = 12;
   var STRONG_AI_SCORE = 0.85;
   var innerBlock = (el) => Array.from(el.children).find((child) => INNER.test(child.tagName));
   var collapse = (s) => s.replace(/\s+/g, " ").trim();
   function ownText(el) {
-    const inner = innerBlock(el);
-    if (!inner) {
-      return el.textContent;
-    }
-    const range = el.ownerDocument.createRange();
-    range.selectNodeContents(el);
-    range.setEndBefore(inner);
-    return range.toString();
+    let out = "";
+    const walk = (node) => {
+      for (const child of node.childNodes) {
+        if (child.nodeType === 3) {
+          out += child.data;
+        } else if (child.nodeType === 1) {
+          if (child.tagName === "BR" || child.matches(BLOCKS)) {
+            out += " ";
+          } else {
+            walk(child);
+          }
+        }
+      }
+    };
+    walk(el);
+    return out;
   }
   function collectBlocks(root) {
-    return Array.from(root.querySelectorAll(BLOCKS)).filter((el) => el.tagName === "LI" || !el.querySelector(BLOCKS)).map((el) => ({ el, text: collapse(ownText(el)) })).filter((block) => block.text !== "");
+    return Array.from(root.querySelectorAll(BLOCKS)).map((el) => ({ el, text: collapse(ownText(el)) })).filter((block) => block.text !== "");
   }
   var RANK = { HUMAN: 1, UNSURE: 2, AI: 3 };
   var KIND = { AI: "ai", UNSURE: "unsure", HUMAN: "human" };
