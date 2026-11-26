@@ -1,7 +1,7 @@
 {
   "name": "@assetfeed/tinymce-ai-detector",
   "version": "0.1.0",
-  "description": "AI writing check for TinyMCE and HugeRTE: marks likely AI-written passages next to the text, without touching the content.",
+  "description": "AI detector plugin for TinyMCE and HugeRTE. Marks likely AI-written passages beside the text and leaves the content untouched.",
   "license": "MIT",
   "type": "module",
   "main": "dist/aidetector.js",
@@ -24,7 +24,10 @@
     "hugerte-plugin",
     "ai-detector",
     "ai-content-detector",
-    "ai-writing"
+    "ai-text-detector",
+    "ai-detection",
+    "wysiwyg",
+    "rich-text-editor"
   ],
   "repository": {
     "type": "git",
@@ -33,7 +36,7 @@
   "homepage": "https://github.com/assetfeed/tinymce-ai-detector#readme",
   "peerDependencies": {
     "hugerte": ">=1",
-    "tinymce": ">=6"
+    "tinymce": ">=8"
   },
   "peerDependenciesMeta": {
     "tinymce": {

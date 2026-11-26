@@ -1,18 +1,18 @@
 # AI detector plugin for TinyMCE and HugeRTE
 
-Check the text in your editor for AI-written passages. One click sends the text to the [AssetFeed AI detector](https://assetfeed.com/ai-content-detector) and marks each passage beside the text:
+A plugin that checks a document for AI-written text. Press a button and the editor's text goes to the [AssetFeed AI content detector](https://assetfeed.com/ai-content-detector). The answer comes back as marks beside the passages:
 
 - an orange bar for likely AI, amber for unsure, green for likely human;
-- a tint behind strong passages;
+- a tint behind the passages the detector is most sure about;
 - a card with the verdict, word count and score when you hover a passage.
 
-The marks are drawn in a layer next to the document. Nothing is added to the content, to `getContent()` or to the undo history, so the saved HTML stays exactly as written.
+The marks live in a separate layer next to the document, not in it. `getContent()` and the undo history never see them, so the saved HTML is exactly what was typed.
 
-![Marks in TinyMCE](docs/screenshot.png)
+![AI detector marks beside the text in TinyMCE](docs/screenshot.png)
 
-**[Try the demo](https://assetfeed.github.io/tinymce-ai-detector/demo/)**. It works without an API key on the sample text.
+**[Try the demo](https://assetfeed.github.io/tinymce-ai-detector/demo/)**. It replays a recorded answer for the sample text, so it works without an API key.
 
-Works with TinyMCE 6, 7 and 8 and HugeRTE 1.x, in the classic (iframe) mode. Inline editors get the summary only. English text only for now.
+Tested on TinyMCE 8.10.2 and HugeRTE 1.0.15, in the classic (iframe) editor. The plugin only uses the public plugin API, so 6 and 7 may work, but we have not run them. Inline editors get the summary notification only. English text only for now.
 
 ## Install
 
@@ -45,7 +45,7 @@ tinymce.init({
 
 ## Connect the detector
 
-Checks use credits of an AssetFeed account. Create an API key at [assetfeed.com/api-keys](https://assetfeed.com/api-keys). Keep the key on your server: anyone who can open the page can read a key that is written into it.
+Checks spend credits on an AssetFeed account. Create an API key at [assetfeed.com/api-keys](https://assetfeed.com/api-keys) and keep it on your server: a key written into the page can be read by anyone who opens it.
 
 Your server route forwards the request body to the AssetFeed API and adds the key:
 
@@ -76,7 +76,7 @@ header('Content-Type: application/json');
 echo $body;
 ```
 
-Put your own sign-in check in front of that route, so that only your editors spend your credits.
+Put your own sign-in check in front of that route, otherwise anyone who finds it can spend your credits.
 
 ## Options
 
@@ -95,13 +95,13 @@ Put your own sign-in check in front of that route, so that only your editors spe
 | `AiDetectorCheck`, `AiDetectorClear`, `AiDetectorToggleMarks` | Commands for `editor.execCommand()`. |
 | `AiDetectorResult` | Editor event with `{ result }` after each answer, for your own display. |
 
-The answer belongs to the text it was given for: the first edit after a check removes the marks. All interface strings go through `editor.translate()`, so they can be translated with the editor's language packs.
+A mark belongs to the text it was made for, so the first edit clears it. All interface strings go through `editor.translate()`, so the editor's language packs can translate them.
 
 ## How the text is sent
 
-The plugin sends one line per block (paragraph, heading, list item, quote, table cell); empty blocks are skipped. The detector scores the text in windows of about 120 to 300 words, and each window names the lines it covers, which is how the marks find their blocks.
+The plugin sends one line per block (paragraph, heading, list item, quote, table cell) and skips empty blocks. The detector scores windows of about 120 to 300 words and says which lines each window covers, which is how a mark finds its block.
 
-Checks made with an API key are not saved to an AssetFeed check history (see the [privacy policy](https://assetfeed.com/privacy-policy)). The score is a probabilistic estimate, not proof of how a text was written.
+Checks made with an API key are not saved to a check history (see the [privacy policy](https://assetfeed.com/privacy-policy)). The score is an estimate, not proof of how a text was written.
 
 ## Development
 
