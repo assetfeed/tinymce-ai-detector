@@ -29,6 +29,15 @@ const ERRORS = {
     503: 'The detector is busy, try again in a minute.',
 }
 
+// Where a developer gets a key or more credits. The UTM tags show in AssetFeed's analytics which visits came from the plugin.
+const UTM = 'utm_source=tinymce-ai-detector&utm_medium=plugin'
+const LINKS = {
+    401: { text: 'Get an API key', href: `https://assetfeed.com/api-keys?${UTM}` },
+    402: { text: 'See plans', href: `https://assetfeed.com/pricing?${UTM}` },
+}
+
+const escapeHtml = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
+
 class DetectorError extends Error {
     constructor(status, message) {
         super(message || '')
@@ -53,7 +62,20 @@ export default function plugin(editor) {
     option('aidetector_request', { processor: 'function' })
 
     const t = (text, ...args) => editor.translate(args.length ? [text, ...args] : text)
-    const notify = (text, type = 'info') => editor.notificationManager.open({ text, type, timeout: 8000 })
+
+    /**
+     * A notification of the editor. Its text is HTML there, so every string is escaped; a link opens in a new tab, never in
+     * the page the editor is on (the editor drops target="_blank", and leaving the page would lose unsaved text).
+     */
+    function notify(text, type = 'info', link = null) {
+        const html = escapeHtml(text) + (link ? ` <a href="${escapeHtml(link.href)}" data-aid-link>${escapeHtml(t(link.text))}</a>` : '')
+        const notification = editor.notificationManager.open({ text: html, type, timeout: link ? 0 : 8000, closeButton: true })
+
+        notification.getEl?.()?.querySelector('[data-aid-link]')?.addEventListener('click', (event) => {
+            event.preventDefault()
+            window.open(link.href, '_blank', 'noopener')
+        })
+    }
 
     let busy = false
     let visible = true
@@ -194,7 +216,9 @@ export default function plugin(editor) {
             editor.dispatch('AiDetectorResult', { result })
         } catch (e) {
             if (!editor.removed) {
-                notify(e?.message || t(ERRORS[e?.status] || 'The AI check failed. Try again later.'), 'error')
+                const known = ERRORS[e?.status]
+
+                notify(known ? t(known) : e?.message || t('The AI check failed. Try again later.'), 'error', LINKS[e?.status])
             }
         } finally {
             busy = false

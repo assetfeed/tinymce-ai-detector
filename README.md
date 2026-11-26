@@ -1,6 +1,6 @@
 # AI detector plugin for TinyMCE and HugeRTE
 
-A plugin that checks a document for AI-written text. Press a button and the editor's text goes to the [AssetFeed AI content detector](https://assetfeed.com/ai-content-detector). The answer comes back as marks beside the passages:
+A plugin that checks a document for AI-written text. Press a button and the editor's text goes to the [AssetFeed AI content detector](https://assetfeed.com/ai-content-detector?utm_source=tinymce-ai-detector&utm_medium=readme). The answer comes back as marks beside the passages:
 
 - an orange bar for likely AI, amber for unsure, green for likely human;
 - a tint behind the passages the detector is most sure about;
@@ -37,7 +37,7 @@ Without a bundler, load the plugin file with `external_plugins`:
 ```js
 tinymce.init({
   selector: '#editor',
-  external_plugins: { aidetector: 'https://cdn.jsdelivr.net/npm/@assetfeed/tinymce-ai-detector@0.1.0/dist/aidetector.min.js' },
+  external_plugins: { aidetector: 'https://cdn.jsdelivr.net/npm/@assetfeed/tinymce-ai-detector@0.1/dist/aidetector.min.js' },
   toolbar: 'aidetector aidetectormarks',
   aidetector_endpoint: '/api/ai-check',
 })
@@ -45,7 +45,7 @@ tinymce.init({
 
 ## Connect the detector
 
-Checks spend credits on an AssetFeed account. Create an API key at [assetfeed.com/api-keys](https://assetfeed.com/api-keys) and keep it on your server: a key written into the page can be read by anyone who opens it.
+Checks spend credits on an AssetFeed account. Free accounts include 500 credits per month, and one check uses 5 credits ([plans](https://assetfeed.com/pricing?utm_source=tinymce-ai-detector&utm_medium=readme)). Create an API key at [assetfeed.com/api-keys](https://assetfeed.com/api-keys?utm_source=tinymce-ai-detector&utm_medium=readme) and keep it on your server: a key written into the page can be read by anyone who opens it.
 
 Your server route forwards the request body to the AssetFeed API and adds the key:
 

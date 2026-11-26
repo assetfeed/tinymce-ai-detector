@@ -224,9 +224,10 @@ ${s} > u[data-kind="${kind}"] { background: ${p[kind].accent}; }`).join("");
       this.closeCard = this.closeCard.bind(this);
       this.endHover = this.endHover.bind(this);
       this.onMove = this.onMove.bind(this);
-      root.addEventListener("pointermove", this.onMove);
-      root.addEventListener("pointerleave", this.endHover);
-      root.addEventListener("pointerdown", this.closeCard);
+      this.area = root.tagName === "BODY" ? this.doc.documentElement : root;
+      this.area.addEventListener("pointermove", this.onMove);
+      this.area.addEventListener("pointerleave", this.endHover);
+      this.area.addEventListener("pointerdown", this.closeCard);
       root.addEventListener("input", this.closeCard);
       this.listen(true);
       const Observer = this.win.ResizeObserver || window.ResizeObserver;
@@ -328,12 +329,34 @@ ${s} > u[data-kind="${kind}"] { background: ${p[kind].accent}; }`).join("");
       }
       return null;
     }
+    /**
+     * The mark at a height of the page, for a pointer that is not over a marked block: in the margin beside one, or in the gap
+     * between two neighbouring blocks of one window (the gap belongs to the window, so its underline does not blink off and on
+     * as the pointer moves from one paragraph to the next).
+     */
+    markAtY(y) {
+      let previous = null;
+      for (const mark of this.marks) {
+        if (!mark.el.isConnected) {
+          continue;
+        }
+        const box = mark.el.getBoundingClientRect();
+        if (y >= box.top && y <= box.bottom) {
+          return mark;
+        }
+        if (previous && y > previous.bottom && y < box.top) {
+          return previous.mark.window === mark.window && previous.mark.index === mark.index - 1 ? previous.mark : null;
+        }
+        previous = { mark, bottom: box.bottom };
+      }
+      return null;
+    }
     onMove(event) {
       if (event.pointerType !== "mouse" || event.buttons !== 0 || this.view === "off" || this.fine && !this.fine.matches) {
         this.endHover();
         return;
       }
-      const mark = this.markAt(event.target);
+      const mark = this.markAt(event.target) ?? this.markAtY(event.clientY);
       const next = mark ? mark.window : -1;
       this.pointer = { x: event.clientX, y: event.clientY };
       if (next !== this.hoverWindow) {
@@ -407,9 +430,9 @@ ${s} > u[data-kind="${kind}"] { background: ${p[kind].accent}; }`).join("");
     }
     destroy() {
       this.closeCard();
-      this.root.removeEventListener("pointermove", this.onMove);
-      this.root.removeEventListener("pointerleave", this.endHover);
-      this.root.removeEventListener("pointerdown", this.closeCard);
+      this.area.removeEventListener("pointermove", this.onMove);
+      this.area.removeEventListener("pointerleave", this.endHover);
+      this.area.removeEventListener("pointerdown", this.closeCard);
       this.root.removeEventListener("input", this.closeCard);
       this.listen(false);
       this.resize?.disconnect();
@@ -432,6 +455,12 @@ ${s} > u[data-kind="${kind}"] { background: ${p[kind].accent}; }`).join("");
     429: "Too many checks at once. Try again in a minute.",
     503: "The detector is busy, try again in a minute."
   };
+  var UTM = "utm_source=tinymce-ai-detector&utm_medium=plugin";
+  var LINKS = {
+    401: { text: "Get an API key", href: `https://assetfeed.com/api-keys?${UTM}` },
+    402: { text: "See plans", href: `https://assetfeed.com/pricing?${UTM}` }
+  };
+  var escapeHtml = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
   var DetectorError = class extends Error {
     constructor(status, message) {
       super(message || "");
@@ -449,7 +478,14 @@ ${s} > u[data-kind="${kind}"] { background: ${p[kind].accent}; }`).join("");
     option("aidetector_api_key", { processor: "string", default: "" });
     option("aidetector_request", { processor: "function" });
     const t = (text, ...args) => editor.translate(args.length ? [text, ...args] : text);
-    const notify = (text, type = "info") => editor.notificationManager.open({ text, type, timeout: 8e3 });
+    function notify(text, type = "info", link = null) {
+      const html = escapeHtml(text) + (link ? ` <a href="${escapeHtml(link.href)}" data-aid-link>${escapeHtml(t(link.text))}</a>` : "");
+      const notification = editor.notificationManager.open({ text: html, type, timeout: link ? 0 : 8e3, closeButton: true });
+      notification.getEl?.()?.querySelector("[data-aid-link]")?.addEventListener("click", (event) => {
+        event.preventDefault();
+        window.open(link.href, "_blank", "noopener");
+      });
+    }
     let busy = false;
     let visible = true;
     let state = null;
@@ -555,7 +591,8 @@ ${s} > u[data-kind="${kind}"] { background: ${p[kind].accent}; }`).join("");
         editor.dispatch("AiDetectorResult", { result });
       } catch (e) {
         if (!editor.removed) {
-          notify(e?.message || t(ERRORS[e?.status] || "The AI check failed. Try again later."), "error");
+          const known = ERRORS[e?.status];
+          notify(known ? t(known) : e?.message || t("The AI check failed. Try again later."), "error", LINKS[e?.status]);
         }
       } finally {
         busy = false;

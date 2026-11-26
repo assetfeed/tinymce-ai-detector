@@ -21,6 +21,7 @@
   <h1>AI detector plugin demo</h1>
   <p class="lead">Press the Check for AI writing button in the toolbar. The page replays a recorded answer from the AssetFeed detector for the sample text, so it works without an API key. Edited text needs a real key.</p>
   <p class="lead">Sample text: the opening of <i>Three Men in a Boat</i> by Jerome K. Jerome (1889, public domain), followed by three paragraphs written by an AI model.</p>
+  <p class="lead">To check your own text, connect the plugin to an AssetFeed account. Free accounts include 500 credits per month, and one check uses 5 credits. <a href="https://assetfeed.com/api-keys?utm_source=tinymce-ai-detector&amp;utm_medium=demo">Get an API key</a> or <a href="https://assetfeed.com/pricing?utm_source=tinymce-ai-detector&amp;utm_medium=demo">see plans</a>.</p>
 
   <h2>TinyMCE 8</h2>
   <textarea id="tinymce-editor"></textarea>
@@ -37,7 +38,8 @@
     const lines = (await sample).trim().split('\n').map((l) => l.replace(/\s+/g, ' ').trim()).join('\n')
     await new Promise((resolve) => setTimeout(resolve, 700))
     if (text !== lines) {
-      throw new Error('This demo only replays the answer for the sample text. Set aidetector_api_key or aidetector_endpoint to check your own text.')
+      // Same as the real API without a key: the plugin says a key is needed and links to where to get one.
+      throw Object.assign(new Error(''), { status: 401 })
     }
     return answer
   }
