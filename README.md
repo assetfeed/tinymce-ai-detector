@@ -6,6 +6,8 @@ A plugin that checks a document for AI-written text. Press a button and the edit
 - a tint behind the passages the detector is most sure about;
 - a card with the verdict, word count and score when you hover a passage.
 
+Under the text, a bar shows the share of AI text, with a Recheck button and a switch between highlights, side bars only and no marks.
+
 The marks live in a separate layer next to the document, not in it. `getContent()` and the undo history never see them, so the saved HTML is exactly what was typed.
 
 ![AI detector marks beside the text in TinyMCE](docs/screenshot.png)
@@ -92,10 +94,10 @@ Put your own sign-in check in front of that route, otherwise anyone who finds it
 |---|---|
 | `aidetector` | Toolbar button and menu item: check the text. |
 | `aidetectormarks` | Toolbar toggle: show or hide the marks. |
-| `AiDetectorCheck`, `AiDetectorClear`, `AiDetectorToggleMarks` | Commands for `editor.execCommand()`. |
+| `AiDetectorCheck`, `AiDetectorClear`, `AiDetectorToggleMarks`, `AiDetectorSetView` | Commands for `editor.execCommand()`. `AiDetectorSetView` takes `'highlight'`, `'bars'` or `'off'`. |
 | `AiDetectorResult` | Editor event with `{ result }` after each answer, for your own display. |
 
-A mark belongs to the text it was made for, so the first edit clears it. All interface strings go through `editor.translate()`, so the editor's language packs can translate them.
+A mark belongs to the text it was made for, so the first edit clears it and the bar asks for a recheck. All interface strings go through `editor.translate()`, so the editor's language packs can translate them.
 
 ## How the text is sent
 

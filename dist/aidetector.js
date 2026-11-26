@@ -1,6 +1,125 @@
 (() => {
-  // src/card.js
+  // src/bar.js
   var CSS = `
+.tox .aid-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 6px 8px; border-top: 1px solid rgb(0 0 0 / .08);
+  font: 13px/1.2 ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; color: #111827; background: transparent; }
+.tox .aid-bar.is-dark { color: #eceef1; border-top-color: rgb(255 255 255 / .1); }
+.tox .aid-badge { --fg: #85888c; display: inline-flex; align-items: center; gap: 8px; height: 30px; padding: 0 12px; border-radius: 999px;
+  background: #fff; box-shadow: 0 0 0 1px rgb(0 0 0 / .06); font-weight: 500; white-space: nowrap; }
+.tox .aid-bar.is-dark .aid-badge { background: rgb(255 255 255 / .06); box-shadow: none; }
+.tox .aid-badge--high, .tox .aid-badge--mid { --fg: oklch(64.6% 0.222 41.116); }
+.tox .aid-badge--low { --fg: oklch(62.7% 0.194 149.214); }
+.tox .aid-bar.is-dark .aid-badge--high, .tox .aid-bar.is-dark .aid-badge--mid { --fg: oklch(75% 0.183 55.934); }
+.tox .aid-bar.is-dark .aid-badge--low { --fg: oklch(79.2% 0.209 151.711); }
+.tox .aid-badge--high .aid-badge__label { color: oklch(55.3% 0.195 38.402); }
+.tox .aid-bar.is-dark .aid-badge--high .aid-badge__label { color: oklch(75% 0.183 55.934); }
+.tox .aid-badge__dot { flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--fg); }
+.tox .aid-badge.is-busy .aid-badge__dot { animation: aid-pulse 1s ease-in-out infinite; }
+@keyframes aid-pulse { 50% { opacity: .25; } }
+.tox .aid-badge__meter { flex: none; width: 40px; height: 4px; overflow: hidden; border-radius: 999px; background: color-mix(in srgb, var(--fg) 20%, transparent); }
+.tox .aid-badge__meter i { display: block; height: 100%; border-radius: inherit; background: var(--fg); }
+.tox .aid-views { display: inline-flex; flex: none; gap: 2px; padding: 2px; border-radius: 999px; background: rgb(0 0 0 / .04); }
+.tox .aid-bar.is-dark .aid-views { background: rgb(255 255 255 / .05); }
+.tox .aid-views button { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 26px; padding: 0; border: 0; border-radius: 999px;
+  background: transparent; color: #6b7280; cursor: pointer; }
+.tox .aid-views button:hover { color: #111827; }
+.tox .aid-views button[aria-checked="true"] { background: #fff; color: #111827; box-shadow: 0 1px 2px 0 rgb(0 0 0 / .08); }
+.tox .aid-bar.is-dark .aid-views button { color: #a3a6ab; }
+.tox .aid-bar.is-dark .aid-views button:hover { color: #fff; }
+.tox .aid-bar.is-dark .aid-views button[aria-checked="true"] { background: #4b4e53; color: #fff; box-shadow: none; }
+.tox .aid-views button:focus-visible, .tox .aid-run:focus-visible { outline: 2px solid currentColor; outline-offset: 1px; }
+.tox .aid-spacer { flex: 1 1 auto; }
+.tox .aid-when { color: #6b7280; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.tox .aid-bar.is-dark .aid-when { color: #a3a6ab; }
+.tox .aid-run { height: 30px; padding: 0 14px; border: 0; border-radius: 999px; background: #fff; color: inherit; font: inherit; font-weight: 500;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / .08); cursor: pointer; white-space: nowrap; }
+.tox .aid-run:hover:not(:disabled) { box-shadow: 0 0 0 1px rgb(0 0 0 / .16); }
+.tox .aid-run:disabled { opacity: .6; cursor: default; }
+.tox .aid-bar.is-dark .aid-run { background: rgb(255 255 255 / .08); box-shadow: none; }
+@media (prefers-reduced-motion: reduce) { .aid-badge.is-busy .aid-badge__dot { animation: none; } }
+.tox .aid-bar [hidden] { display: none; }
+`;
+  var VIEW_ICONS = {
+    highlight: '<path d="m9 11-6 6v3h9l3-3"/><path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/>',
+    bars: '<path d="M17 5H3"/><path d="M21 12H8"/><path d="M21 19H8"/><path d="M3 12v7"/>',
+    off: '<path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/>'
+  };
+  var VIEWS = ["highlight", "bars", "off"];
+  var VIEW_LABEL = { highlight: "Highlight passages", bars: "Side bars only", off: "Hide marks" };
+  var LEVEL = { ai: "high", unsure: "mid", human: "low" };
+  var el = (doc, tag, cls, attrs = {}) => Object.assign(doc.createElement(tag), cls ? { className: cls } : {}, attrs);
+  function createBar({ container, t, onRun, onView }) {
+    const doc = container.ownerDocument;
+    if (!doc.getElementById("aid-bar-style")) {
+      doc.head.appendChild(el(doc, "style", "", { id: "aid-bar-style", textContent: CSS }));
+    }
+    const bar = el(doc, "div", "aid-bar");
+    const badge = el(doc, "span", "aid-badge");
+    const dot = el(doc, "span", "aid-badge__dot");
+    const label = el(doc, "span", "aid-badge__label");
+    const meter = el(doc, "span", "aid-badge__meter");
+    const fill = el(doc, "i");
+    const views = el(doc, "div", "aid-views", { role: "radiogroup" });
+    const when = el(doc, "span", "aid-when");
+    const run = el(doc, "button", "aid-run", { type: "button" });
+    meter.appendChild(fill);
+    badge.append(dot, label, meter);
+    views.setAttribute("aria-label", t("Marks view"));
+    const buttons = VIEWS.map((view) => {
+      const button = el(doc, "button", "", { type: "button", title: t(VIEW_LABEL[view]) });
+      button.setAttribute("role", "radio");
+      button.setAttribute("aria-label", t(VIEW_LABEL[view]));
+      button.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${VIEW_ICONS[view]}</svg>`;
+      button.addEventListener("click", () => onView(view));
+      views.appendChild(button);
+      return button;
+    });
+    views.addEventListener("keydown", (event) => {
+      const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[event.key];
+      const current = buttons.findIndex((b) => b.getAttribute("aria-checked") === "true");
+      if (step && current >= 0) {
+        event.preventDefault();
+        const next = (current + step + VIEWS.length) % VIEWS.length;
+        onView(VIEWS[next]);
+        buttons[next].focus();
+      }
+    });
+    run.addEventListener("click", () => onRun());
+    bar.append(badge, views, el(doc, "span", "aid-spacer"), when, run);
+    const statusbar = container.querySelector(".tox-statusbar");
+    if (statusbar) {
+      statusbar.before(bar);
+    } else {
+      (container.querySelector(".tox-editor-container") || container).appendChild(bar);
+    }
+    function render(s) {
+      bar.classList.toggle("is-dark", s.dark);
+      bar.style.background = statusbar ? getComputedStyle(statusbar).backgroundColor : "";
+      badge.className = `aid-badge${s.status === "ok" ? ` aid-badge--${LEVEL[s.kind] ?? "mid"}` : ""}${s.status === "busy" ? " is-busy" : ""}`;
+      label.textContent = {
+        idle: t("AI check: not run yet"),
+        busy: t("Checking\u2026"),
+        ok: t("AI text {0}%", s.percent),
+        stale: t("Text changed since the check: recheck")
+      }[s.status];
+      meter.hidden = s.status !== "ok";
+      fill.style.width = `${Math.max(2, s.percent ?? 0)}%`;
+      views.hidden = s.status !== "ok";
+      buttons.forEach((button, i) => {
+        const on = VIEWS[i] === s.view;
+        button.setAttribute("aria-checked", on ? "true" : "false");
+        button.tabIndex = on ? 0 : -1;
+      });
+      when.hidden = !(s.checkedAt && s.status === "ok");
+      when.textContent = s.checkedAt ? t("Checked {0}", s.checkedAt.toLocaleString()) : "";
+      run.disabled = s.status === "busy";
+      run.textContent = s.status === "idle" ? t("Check for AI writing") : t("Recheck");
+    }
+    return { render, remove: () => bar.remove() };
+  }
+
+  // src/card.js
+  var CSS2 = `
 .aid-card { --fg: oklch(64.6% 0.222 41.116); --text: oklch(55.3% 0.195 38.402); --tint: color-mix(in srgb, oklch(64.6% 0.222 41.116) 15%, transparent);
   position: fixed; z-index: 1400; box-sizing: border-box; width: 224px; padding: 12px 14px; border-radius: 14px; background: #fff; color: #111827;
   box-shadow: 0 12px 32px -10px rgb(0 0 0 / .22), 0 2px 6px rgb(0 0 0 / .06), 0 0 0 1px rgb(0 0 0 / .04);
@@ -36,25 +155,25 @@
     if (!document.getElementById("aid-card-style")) {
       const style = document.createElement("style");
       style.id = "aid-card-style";
-      style.textContent = CSS;
+      style.textContent = CSS2;
       document.head.appendChild(style);
     }
-    const el = document.createElement("div");
-    el.setAttribute("aria-hidden", "true");
-    el.hidden = true;
-    document.body.appendChild(el);
+    const el2 = document.createElement("div");
+    el2.setAttribute("aria-hidden", "true");
+    el2.hidden = true;
+    document.body.appendChild(el2);
     const show = (card) => {
       if (!card) {
-        el.hidden = true;
+        el2.hidden = true;
         return;
       }
-      el.className = `aid-card aid-card--${card.kind}${card.above ? " is-above" : ""}${dark() ? " is-dark" : ""}`;
-      el.style.left = `${card.left}px`;
-      el.style.top = `${card.top}px`;
-      el.innerHTML = `<div class="aid-card__head"><span class="aid-card__icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[card.kind]}</svg></span><span class="aid-card__label">${escape(card.label)}</span><span class="aid-card__words">${escape(card.words)}</span></div>` + (card.fill === null ? "" : `<div class="aid-card__meter"><i style="width:${Math.max(card.fill, 2)}%"></i></div>`) + (card.share ? `<p class="aid-card__share"><span class="aid-card__dot"></span>${escape(card.share)}</p>` : "");
-      el.hidden = false;
+      el2.className = `aid-card aid-card--${card.kind}${card.above ? " is-above" : ""}${dark() ? " is-dark" : ""}`;
+      el2.style.left = `${card.left}px`;
+      el2.style.top = `${card.top}px`;
+      el2.innerHTML = `<div class="aid-card__head"><span class="aid-card__icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[card.kind]}</svg></span><span class="aid-card__label">${escape(card.label)}</span><span class="aid-card__words">${escape(card.words)}</span></div>` + (card.fill === null ? "" : `<div class="aid-card__meter"><i style="width:${Math.max(card.fill, 2)}%"></i></div>`) + (card.share ? `<p class="aid-card__share"><span class="aid-card__dot"></span>${escape(card.share)}</p>` : "");
+      el2.hidden = false;
     };
-    return { show, remove: () => el.remove() };
+    return { show, remove: () => el2.remove() };
   }
 
   // src/marks.js
@@ -62,9 +181,9 @@
   var INNER = /^(UL|OL|TABLE|BLOCKQUOTE|P|DIV|H[1-6])$/;
   var MIN_MARK_WORDS = 12;
   var STRONG_AI_SCORE = 0.85;
-  var innerBlock = (el) => Array.from(el.children).find((child) => INNER.test(child.tagName));
+  var innerBlock = (el2) => Array.from(el2.children).find((child) => INNER.test(child.tagName));
   var collapse = (s) => s.replace(/\s+/g, " ").trim();
-  function ownText(el) {
+  function ownText(el2) {
     let out = "";
     const walk = (node) => {
       for (const child of node.childNodes) {
@@ -79,11 +198,11 @@
         }
       }
     };
-    walk(el);
+    walk(el2);
     return out;
   }
   function collectBlocks(root) {
-    return Array.from(root.querySelectorAll(BLOCKS)).map((el) => ({ el, text: collapse(ownText(el)) })).filter((block) => block.text !== "");
+    return Array.from(root.querySelectorAll(BLOCKS)).map((el2) => ({ el: el2, text: collapse(ownText(el2)) })).filter((block) => block.text !== "");
   }
   var RANK = { HUMAN: 1, UNSURE: 2, AI: 3 };
   var KIND = { AI: "ai", UNSURE: "unsure", HUMAN: "human" };
@@ -115,11 +234,11 @@
     }
     const owner = lineWindows(result.windows);
     const marks = [];
-    blocks.forEach(({ el, text }, index) => {
+    blocks.forEach(({ el: el2, text }, index) => {
       const wi = owner.get(index);
       const kind = wi === void 0 ? null : kindOf(result.windows[wi]);
       if (kind && words(text) >= MIN_MARK_WORDS) {
-        marks.push({ el, kind, window: wi, index });
+        marks.push({ el: el2, kind, window: wi, index });
       }
     });
     return marks;
@@ -264,10 +383,10 @@ ${s} > u[data-kind="${kind}"] { background: ${p[kind].accent}; }`).join("");
         this.draw();
       });
     }
-    ownLineBoxes(el) {
+    ownLineBoxes(el2) {
       const range = this.doc.createRange();
-      range.selectNodeContents(el);
-      const inner = innerBlock(el);
+      range.selectNodeContents(el2);
+      const inner = innerBlock(el2);
       if (inner) {
         range.setEndBefore(inner);
       }
@@ -285,12 +404,12 @@ ${s} > u[data-kind="${kind}"] { background: ${p[kind].accent}; }`).join("");
           }
           group = null;
         };
-        for (const { el, kind, window: wi, index } of this.marks) {
-          if (!el.isConnected) {
+        for (const { el: el2, kind, window: wi, index } of this.marks) {
+          if (!el2.isConnected) {
             continue;
           }
-          const box = el.getBoundingClientRect();
-          const inner = innerBlock(el);
+          const box = el2.getBoundingClientRect();
+          const inner = innerBlock(el2);
           const bottom = inner ? inner.getBoundingClientRect().top : box.bottom;
           if (bottom - box.top <= 0) {
             continue;
@@ -307,7 +426,7 @@ ${s} > u[data-kind="${kind}"] { background: ${p[kind].accent}; }`).join("");
           if (!tinted && !hovered) {
             continue;
           }
-          for (const line of this.ownLineBoxes(el)) {
+          for (const line of this.ownLineBoxes(el2)) {
             if (tinted) {
               out.push(`<b data-kind="${kind}" style="left:${px(line.left + dx - 3)};top:${px(line.top + dy - 1)};width:${px(line.right - line.left + 6)};height:${px(line.bottom - line.top + 2)}"></b>`);
             }
@@ -357,15 +476,20 @@ ${s} > u[data-kind="${kind}"] { background: ${p[kind].accent}; }`).join("");
         return;
       }
       const mark = this.markAt(event.target) ?? this.markAtY(event.clientY);
-      const next = mark ? mark.window : -1;
       this.pointer = { x: event.clientX, y: event.clientY };
+      if (!mark) {
+        clearTimeout(this.hoverTimer);
+        this.hoverTimer = null;
+        return;
+      }
+      const next = mark.window;
       if (next !== this.hoverWindow) {
         this.hoverWindow = next;
         this.closeCard();
         this.schedule();
       }
-      this.hoverEl = mark ? mark.el : null;
-      if (!mark || this.cardOpen) {
+      this.hoverEl = mark.el;
+      if (this.cardOpen) {
         return;
       }
       clearTimeout(this.hoverTimer);
@@ -468,8 +592,8 @@ ${s} > u[data-kind="${kind}"] { background: ${p[kind].accent}; }`).join("");
     }
   };
   var opaque = (color) => color && color !== "transparent" && !/rgba\(.*,\s*0\)$/.test(color);
-  function isDark(el) {
-    const [r, g, b] = (getComputedStyle(el).color.match(/\d+(\.\d+)?/g) || [0, 0, 0]).map(Number);
+  function isDark(el2) {
+    const [r, g, b] = (getComputedStyle(el2).color.match(/\d+(\.\d+)?/g) || [0, 0, 0]).map(Number);
     return 0.2126 * r + 0.7152 * g + 0.0722 * b > 140;
   }
   function plugin(editor) {
@@ -487,10 +611,13 @@ ${s} > u[data-kind="${kind}"] { background: ${p[kind].accent}; }`).join("");
       });
     }
     let busy = false;
-    let visible = true;
+    let view = "highlight";
+    let shown = "highlight";
     let state = null;
+    let stale = false;
     let painter = null;
     let card = null;
+    let bar = null;
     let dark = false;
     async function send(text) {
       const custom = editor.options.get("aidetector_request");
@@ -546,15 +673,31 @@ ${s} > u[data-kind="${kind}"] { background: ${p[kind].accent}; }`).join("");
         }
       });
     }
+    function renderBar() {
+      const result = state?.result;
+      bar?.render({
+        status: busy ? "busy" : state ? "ok" : stale ? "stale" : "idle",
+        kind: result ? kindOf(result) ?? "unsure" : null,
+        percent: result ? percent(result.ai_fraction) : 0,
+        view,
+        checkedAt: state?.checkedAt,
+        dark: isDark(editor.getContainer().querySelector(".tox-statusbar") || editor.getContainer())
+      });
+    }
     function paint() {
-      painter?.update({ marks: state?.marks, windows: state?.result?.windows, view: visible ? "highlight" : "off" });
+      painter?.update({ marks: state?.marks, windows: state?.result?.windows, view });
+      renderBar();
       editor.dispatch("AiDetectorStateChange");
     }
+    function setView(next) {
+      view = next;
+      shown = next === "off" ? shown : next;
+      paint();
+    }
     function clear() {
-      if (state) {
-        state = null;
-        paint();
-      }
+      stale = false;
+      state = null;
+      paint();
     }
     async function check() {
       if (busy) {
@@ -568,6 +711,7 @@ ${s} > u[data-kind="${kind}"] { background: ${p[kind].accent}; }`).join("");
       const text = blocks.map((block) => block.text).join("\n");
       busy = true;
       editor.setProgressState(true);
+      renderBar();
       try {
         const result = await send(text);
         const current = editor.removed ? null : collectBlocks(editor.getBody());
@@ -580,11 +724,13 @@ ${s} > u[data-kind="${kind}"] { background: ${p[kind].accent}; }`).join("");
           notify(t("Only English text can be checked for now."));
         } else if (result?.status === "ok") {
           mount();
-          visible = true;
-          state = { text, result, marks: marksFor(current, result) };
-          paint();
-          const kind = kindOf(result) ?? "unsure";
-          notify(`${t(LABEL[kind])} \xB7 ${t("AI {0}%", percent(result.ai_fraction))}`, kind === "human" ? "success" : "warning");
+          view = view === "off" ? shown : view;
+          stale = false;
+          state = { text, result, marks: marksFor(current, result), checkedAt: /* @__PURE__ */ new Date() };
+          if (!bar) {
+            const kind = kindOf(result) ?? "unsure";
+            notify(`${t(LABEL[kind])} \xB7 ${t("AI {0}%", percent(result.ai_fraction))}`, kind === "human" ? "success" : "warning");
+          }
         } else {
           throw new DetectorError(0);
         }
@@ -598,24 +744,33 @@ ${s} > u[data-kind="${kind}"] { background: ${p[kind].accent}; }`).join("");
         busy = false;
         if (!editor.removed) {
           editor.setProgressState(false);
+          paint();
         }
       }
     }
     editor.on("input change undo redo SetContent", () => {
       if (state && collectBlocks(editor.getBody()).map((block) => block.text).join("\n") !== state.text) {
-        clear();
+        state = null;
+        stale = true;
+        paint();
       }
     });
+    editor.on("init", () => {
+      if (!editor.inline) {
+        bar = createBar({ container: editor.getContainer(), t, onRun: check, onView: setView });
+        renderBar();
+      }
+    });
+    editor.on("SkinLoaded", renderBar);
     editor.on("remove", () => {
       painter?.destroy();
       card?.remove();
+      bar?.remove();
     });
     editor.addCommand("AiDetectorCheck", check);
     editor.addCommand("AiDetectorClear", clear);
-    editor.addCommand("AiDetectorToggleMarks", () => {
-      visible = !visible;
-      paint();
-    });
+    editor.addCommand("AiDetectorToggleMarks", () => setView(view === "off" ? shown : "off"));
+    editor.addCommand("AiDetectorSetView", (ui, next) => VIEWS.includes(next) && setView(next));
     editor.ui.registry.addIcon("ai-detector", ICON_CHECK);
     editor.ui.registry.addIcon("ai-detector-marks", ICON_MARKS);
     editor.ui.registry.addButton("aidetector", {
@@ -630,7 +785,7 @@ ${s} > u[data-kind="${kind}"] { background: ${p[kind].accent}; }`).join("");
       onSetup: (api) => {
         const sync = () => {
           api.setEnabled(Boolean(state?.marks?.length));
-          api.setActive(Boolean(state?.marks?.length) && visible);
+          api.setActive(Boolean(state?.marks?.length) && view !== "off");
         };
         sync();
         editor.on("AiDetectorStateChange", sync);

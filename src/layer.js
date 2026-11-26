@@ -286,9 +286,19 @@ export class MarkPainter {
         }
 
         const mark = this.markAt(event.target) ?? this.markAtY(event.clientY)
-        const next = mark ? mark.window : -1
 
         this.pointer = { x: event.clientX, y: event.clientY }
+
+        // Off a marked block (a gap, a margin, a short unmarked line) the window under the pointer stays as it was: the
+        // underline changes only when the pointer reaches a block of another window, and goes when it leaves the editor.
+        if (!mark) {
+            clearTimeout(this.hoverTimer)
+            this.hoverTimer = null
+
+            return
+        }
+
+        const next = mark.window
 
         if (next !== this.hoverWindow) {
             this.hoverWindow = next
@@ -296,9 +306,9 @@ export class MarkPainter {
             this.schedule()
         }
 
-        this.hoverEl = mark ? mark.el : null
+        this.hoverEl = mark.el
 
-        if (!mark || this.cardOpen) {
+        if (this.cardOpen) {
             return
         }
 

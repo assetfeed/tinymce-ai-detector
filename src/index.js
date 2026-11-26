@@ -11,6 +11,7 @@
  *   aidetector_request: async ({ text }) => answer  // or any transport you like
  */
 
+import { VIEWS, createBar } from './bar.js'
 import { createCard } from './card.js'
 import { MarkPainter, layerCss } from './layer.js'
 import { LABEL, collectBlocks, kindOf, marksFor, percent } from './marks.js'
@@ -78,10 +79,13 @@ export default function plugin(editor) {
     }
 
     let busy = false
-    let visible = true
-    let state = null // { text, result, marks }
+    let view = 'highlight' // highlight | bars | off
+    let shown = 'highlight' // the view the marks toggle brings back
+    let state = null // { text, result, marks, checkedAt }
+    let stale = false // the text changed after the last answer
     let painter = null
     let card = null
+    let bar = null
     let dark = false
 
     async function send(text) {
@@ -155,16 +159,35 @@ export default function plugin(editor) {
         })
     }
 
+    function renderBar() {
+        const result = state?.result
+
+        bar?.render({
+            status: busy ? 'busy' : state ? 'ok' : stale ? 'stale' : 'idle',
+            kind: result ? kindOf(result) ?? 'unsure' : null,
+            percent: result ? percent(result.ai_fraction) : 0,
+            view,
+            checkedAt: state?.checkedAt,
+            dark: isDark(editor.getContainer().querySelector('.tox-statusbar') || editor.getContainer()),
+        })
+    }
+
     function paint() {
-        painter?.update({ marks: state?.marks, windows: state?.result?.windows, view: visible ? 'highlight' : 'off' })
+        painter?.update({ marks: state?.marks, windows: state?.result?.windows, view })
+        renderBar()
         editor.dispatch('AiDetectorStateChange')
     }
 
+    function setView(next) {
+        view = next
+        shown = next === 'off' ? shown : next
+        paint()
+    }
+
     function clear() {
-        if (state) {
-            state = null
-            paint()
-        }
+        stale = false
+        state = null
+        paint()
     }
 
     async function check() {
@@ -183,6 +206,7 @@ export default function plugin(editor) {
 
         busy = true
         editor.setProgressState(true)
+        renderBar()
 
         try {
             const result = await send(text)
@@ -202,13 +226,16 @@ export default function plugin(editor) {
                 notify(t('Only English text can be checked for now.'))
             } else if (result?.status === 'ok') {
                 mount()
-                visible = true
-                state = { text, result, marks: marksFor(current, result) }
-                paint()
+                view = view === 'off' ? shown : view
+                stale = false
+                state = { text, result, marks: marksFor(current, result), checkedAt: new Date() }
 
-                const kind = kindOf(result) ?? 'unsure'
+                // The bar under the text shows the share; editors without it (inline) get it as a notification.
+                if (!bar) {
+                    const kind = kindOf(result) ?? 'unsure'
 
-                notify(`${t(LABEL[kind])} · ${t('AI {0}%', percent(result.ai_fraction))}`, kind === 'human' ? 'success' : 'warning')
+                    notify(`${t(LABEL[kind])} · ${t('AI {0}%', percent(result.ai_fraction))}`, kind === 'human' ? 'success' : 'warning')
+                }
             } else {
                 throw new DetectorError(0)
             }
@@ -225,27 +252,36 @@ export default function plugin(editor) {
 
             if (!editor.removed) {
                 editor.setProgressState(false)
+                paint()
             }
         }
     }
 
-    // An answer is for the text it was given: the first edit after it drops the marks.
+    // An answer is for the text it was given: the first edit after it drops the marks, and the bar asks for a recheck.
     editor.on('input change undo redo SetContent', () => {
         if (state && collectBlocks(editor.getBody()).map((block) => block.text).join('\n') !== state.text) {
-            clear()
+            state = null
+            stale = true
+            paint()
         }
     })
+    editor.on('init', () => {
+        if (!editor.inline) {
+            bar = createBar({ container: editor.getContainer(), t, onRun: check, onView: setView })
+            renderBar()
+        }
+    })
+    editor.on('SkinLoaded', renderBar)
     editor.on('remove', () => {
         painter?.destroy()
         card?.remove()
+        bar?.remove()
     })
 
     editor.addCommand('AiDetectorCheck', check)
     editor.addCommand('AiDetectorClear', clear)
-    editor.addCommand('AiDetectorToggleMarks', () => {
-        visible = !visible
-        paint()
-    })
+    editor.addCommand('AiDetectorToggleMarks', () => setView(view === 'off' ? shown : 'off'))
+    editor.addCommand('AiDetectorSetView', (ui, next) => VIEWS.includes(next) && setView(next))
 
     editor.ui.registry.addIcon('ai-detector', ICON_CHECK)
     editor.ui.registry.addIcon('ai-detector-marks', ICON_MARKS)
@@ -261,7 +297,7 @@ export default function plugin(editor) {
         onSetup: (api) => {
             const sync = () => {
                 api.setEnabled(Boolean(state?.marks?.length))
-                api.setActive(Boolean(state?.marks?.length) && visible)
+                api.setActive(Boolean(state?.marks?.length) && view !== 'off')
             }
 
             sync()
