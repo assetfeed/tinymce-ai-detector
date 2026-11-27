@@ -22,7 +22,7 @@ The marks are drawn in a separate layer beside the text. They never reach the sa
 | Tiptap | [`@assetfeed/tiptap-ai-detector`](packages/tiptap/README.md) ([npm](https://www.npmjs.com/package/@assetfeed/tiptap-ai-detector)) | Tiptap 2.27.3 and 3.35.1 |
 | Editor.js | [`@assetfeed/editorjs-ai-detector`](packages/editorjs/README.md) ([npm](https://www.npmjs.com/package/@assetfeed/editorjs-ai-detector)) | Editor.js 2.31.7 |
 
-For WordPress there is [`packages/wordpress`](packages/wordpress/README.md): a plugin for the block editor (sidebar) and the Classic Editor (meta box). It is not published to npm; the key stays on the WordPress server.
+For WordPress there is a plugin in [`packages/wordpress`](packages/wordpress/README.md): a sidebar and an options-menu entry in the block editor, and a box in the Classic Editor. It is not on npm; build the zip from source. The API key stays on the WordPress server.
 
 For Laravel Nova there is a detail-page field in a separate repository: [assetfeed/nova-ai-detector](https://github.com/assetfeed/nova-ai-detector).
 
