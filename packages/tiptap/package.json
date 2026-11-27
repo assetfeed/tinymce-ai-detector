@@ -1,0 +1,48 @@
+{
+  "name": "@assetfeed/tiptap-ai-detector",
+  "version": "0.1.0",
+  "description": "AI detector extension for Tiptap. Marks likely AI-written passages beside the text and leaves the document untouched.",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "tiptap",
+    "tiptap-extension",
+    "prosemirror",
+    "ai-detector",
+    "ai-content-detector",
+    "ai-text-detector",
+    "ai-detection",
+    "wysiwyg",
+    "rich-text-editor"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/assetfeed/ai-detector-plugins.git",
+    "directory": "packages/tiptap"
+  },
+  "homepage": "https://github.com/assetfeed/ai-detector-plugins/tree/main/packages/tiptap#readme",
+  "peerDependencies": {
+    "@tiptap/core": "^2.0.0 || ^3.0.0"
+  },
+  "scripts": {
+    "build": "esbuild src/index.js --bundle --format=esm --external:@tiptap/core --outfile=dist/index.js",
+    "test": "node --test test/*.test.js"
+  },
+  "devDependencies": {
+    "@assetfeed/ai-detector-core": "*"
+  },
+  "bugs": {
+    "url": "https://github.com/assetfeed/ai-detector-plugins/issues"
+  }
+}

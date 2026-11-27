@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AI detector plugin demo for TinyMCE and HugeRTE</title>
+<title>AI detector plugin demo for TinyMCE, HugeRTE and Tiptap</title>
 <style>
   body { margin: 0; padding: 24px 16px 48px; background: #f6f7f8; color: #111827; font: 15px/1.5 ui-sans-serif, system-ui, sans-serif; }
   main { max-width: 860px; margin: 0 auto; }
@@ -11,10 +11,16 @@
   h2 { margin: 32px 0 8px; font-size: 17px; }
   p.lead { margin: 0 0 8px; color: #4b5563; }
   a { color: #111827; }
+  #tiptap-editor { border: 1px solid #d1d5db; border-radius: 6px 6px 0 0; background: #fff; }
+  #tiptap-editor .ProseMirror { min-height: 360px; padding: 16px 20px 16px 28px; outline: none; }
+  #tiptap-editor .ProseMirror p { margin: 0 0 12px; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/tinymce@8.10.2/tinymce.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/hugerte@1.0.15/hugerte.min.js"></script>
 <script src="../packages/tinymce/dist/aidetector.js"></script>
+<script type="importmap">
+{ "imports": { "@tiptap/core": "https://esm.sh/@tiptap/core@3.35.1", "@tiptap/starter-kit": "https://esm.sh/@tiptap/starter-kit@3.35.1" } }
+</script>
 </head>
 <body>
 <main>
@@ -28,6 +34,9 @@
 
   <h2>HugeRTE 1</h2>
   <textarea id="hugerte-editor"></textarea>
+
+  <h2>Tiptap 3</h2>
+  <div id="tiptap-editor"></div>
 </main>
 <script>
   const sample = fetch('sample.txt').then((r) => r.text())
@@ -56,6 +65,20 @@
     const html = text.trim().split('\n').map((l) => `<p>${l.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</p>`).join('')
     tinymce.init({ ...config, selector: '#tinymce-editor', license_key: 'gpl', init_instance_callback: (e) => e.setContent(html) })
     hugerte.init({ ...config, selector: '#hugerte-editor', init_instance_callback: (e) => e.setContent(html) })
+  })
+</script>
+<script type="module">
+  import { Editor } from '@tiptap/core'
+  import StarterKit from '@tiptap/starter-kit'
+  import { AiDetector } from '../packages/tiptap/dist/index.js'
+
+  const text = await sample
+  const content = text.trim().split('\n').map((l) => `<p>${l.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</p>`).join('')
+
+  window.tiptapEditor = new Editor({
+    element: document.querySelector('#tiptap-editor'),
+    extensions: [StarterKit, AiDetector.configure({ request: replay })],
+    content,
   })
 </script>
 </body>
