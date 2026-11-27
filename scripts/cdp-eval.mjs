@@ -1,8 +1,9 @@
 // Dev helper: open a URL in a private headless Chrome and print what an async function returns.
 // node scripts/cdp-eval.mjs <url> <file-with-async-arrow-function> [width]
+// SCREENSHOT=/abs/path.png saves the viewport after the function ran; COOKIE='name=value;domain' sets a cookie before navigating.
 // ponytail: tiny CDP client on Node's built-in WebSocket, no puppeteer; one page, one evaluation.
 import { spawn } from 'node:child_process'
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -33,10 +34,20 @@ try {
     const send = (method, params = {}) => new Promise((r) => { const n = ++id; pending.set(n, r); ws.send(JSON.stringify({ id: n, method, params })) })
     await send('Runtime.enable')
     await send('Page.enable')
+    await send('Network.enable')
+    if (process.env.COOKIE) {
+        const [pair, domain] = process.env.COOKIE.split(';')
+        const [name, ...value] = pair.split('=')
+        await send('Network.setCookie', { name, value: value.join('='), domain: domain || new URL(url).hostname, path: '/' })
+    }
     await send('Page.navigate', { url })
     await sleep(3000)
     const fn = readFileSync(file, 'utf8')
     const res = await send('Runtime.evaluate', { expression: `(${fn})()`, awaitPromise: true, returnByValue: true, timeout: 60000 })
+    if (process.env.SCREENSHOT) {
+        const shot = await send('Page.captureScreenshot', { format: 'png' })
+        writeFileSync(process.env.SCREENSHOT, Buffer.from(shot.result.data, 'base64'))
+    }
     console.log(JSON.stringify({ result: res.result?.result?.value ?? res.result?.exceptionDetails?.exception?.description ?? res.result, logs }, null, 1))
     ws.close()
 } finally {
