@@ -1,10 +1,11 @@
 /**
  * The AI bar under the text, as in AssetFeed's own editors: the share of AI text with a meter, the marks view (highlight,
- * side bars only, hidden), when the text was checked and a button to check it again. It sits in the editor's frame just above
- * the status bar and takes the editor's light or dark look.
+ * side bars only, hidden), when the text was checked and a button to check it again. The plugin puts it where it belongs in
+ * its editor (under the text, above a status bar) and passes the editor's light or dark look.
  */
 
-// Every rule starts with .tox: the editor's skin resets its own elements (.tox :not(svg)) and would win over plain classes.
+// Every rule starts with a scope: TinyMCE's skin resets its own elements (.tox :not(svg)) and would win over plain classes, so
+// the TinyMCE plugin passes '.tox'. Other editors pass their own root class or nothing.
 const CSS = `
 .tox .aid-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 6px 8px; border-top: 1px solid rgb(0 0 0 / .08);
   font: 13px/1.2 ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; color: #111827; background: transparent; }
@@ -60,16 +61,19 @@ const el = (doc, tag, cls, attrs = {}) => Object.assign(doc.createElement(tag), 
 
 /**
  * @param {object} o
- * @param {Element} o.container  the editor's container (editor.getContainer())
+ * @param {Document} o.doc  the page document the bar goes into
+ * @param {string} [o.scope]  a selector the bar sits inside, prefixed to every rule ('.tox' in TinyMCE)
  * @param {(text: string, ...args: any[]) => string} o.t  the editor's translate
  * @param {() => void} o.onRun  check the text
  * @param {(view: string) => void} o.onView  a marks view was picked
+ * @returns {{el: HTMLElement, render: (s: object) => void, remove: () => void}}  the caller places el
  */
-export function createBar({ container, t, onRun, onView }) {
-    const doc = container.ownerDocument
+export function createBar({ doc, scope = '', t, onRun, onView }) {
 
-    if (!doc.getElementById('aid-bar-style')) {
-        doc.head.appendChild(el(doc, 'style', '', { id: 'aid-bar-style', textContent: CSS }))
+    const styleId = `aid-bar-style${scope ? `-${scope.replace(/\W/g, '')}` : ''}`
+
+    if (!doc.getElementById(styleId)) {
+        doc.head.appendChild(el(doc, 'style', '', { id: styleId, textContent: CSS.replaceAll('.tox ', scope ? `${scope} ` : '') }))
     }
 
     const bar = el(doc, 'div', 'aid-bar')
@@ -114,14 +118,6 @@ export function createBar({ container, t, onRun, onView }) {
     run.addEventListener('click', () => onRun())
     bar.append(badge, views, el(doc, 'span', 'aid-spacer'), when, run)
 
-    const statusbar = container.querySelector('.tox-statusbar')
-
-    if (statusbar) {
-        statusbar.before(bar)
-    } else {
-        (container.querySelector('.tox-editor-container') || container).appendChild(bar)
-    }
-
     /**
      * @param {object} s
      * @param {'idle'|'busy'|'ok'|'stale'} s.status
@@ -130,11 +126,11 @@ export function createBar({ container, t, onRun, onView }) {
      * @param {string} [s.view]  the marks view
      * @param {Date} [s.checkedAt]
      * @param {boolean} s.dark
+     * @param {string} [s.background]  the colour behind the bar (the editor's frame may be see-through)
      */
     function render(s) {
         bar.classList.toggle('is-dark', s.dark)
-        // The frame between the text and the status bar is see-through: the bar takes the status bar's colour.
-        bar.style.background = statusbar ? getComputedStyle(statusbar).backgroundColor : ''
+        bar.style.background = s.background || ''
         badge.className = `aid-badge${s.status === 'ok' ? ` aid-badge--${LEVEL[s.kind] ?? 'mid'}` : ''}${s.status === 'busy' ? ' is-busy' : ''}`
         label.textContent = {
             idle: t('AI check: not run yet'),
@@ -157,5 +153,5 @@ export function createBar({ container, t, onRun, onView }) {
         run.textContent = s.status === 'idle' ? t('Check for AI writing') : t('Recheck')
     }
 
-    return { render, remove: () => bar.remove() }
+    return { el: bar, render, remove: () => bar.remove() }
 }

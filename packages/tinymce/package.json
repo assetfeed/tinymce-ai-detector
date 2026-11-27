@@ -1,0 +1,57 @@
+{
+  "name": "@assetfeed/tinymce-ai-detector",
+  "version": "0.1.2",
+  "description": "AI detector plugin for TinyMCE and HugeRTE. Marks likely AI-written passages beside the text and leaves the content untouched.",
+  "license": "MIT",
+  "main": "dist/aidetector.js",
+  "module": "dist/aidetector.esm.js",
+  "exports": {
+    ".": {
+      "import": "./dist/aidetector.esm.js",
+      "default": "./dist/aidetector.js"
+    },
+    "./plugin.min.js": "./dist/aidetector.min.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "tinymce",
+    "tinymce-plugin",
+    "hugerte",
+    "hugerte-plugin",
+    "ai-detector",
+    "ai-content-detector",
+    "ai-text-detector",
+    "ai-detection",
+    "wysiwyg",
+    "rich-text-editor"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/assetfeed/ai-detector.git",
+    "directory": "packages/tinymce"
+  },
+  "homepage": "https://github.com/assetfeed/ai-detector/tree/main/packages/tinymce#readme",
+  "peerDependencies": {
+    "hugerte": ">=1",
+    "tinymce": ">=6"
+  },
+  "peerDependenciesMeta": {
+    "tinymce": {
+      "optional": true
+    },
+    "hugerte": {
+      "optional": true
+    }
+  },
+  "scripts": {
+    "build": "esbuild src/index.js --bundle --format=iife --outfile=dist/aidetector.js && esbuild src/index.js --bundle --format=iife --minify --outfile=dist/aidetector.min.js && esbuild src/index.js --bundle --format=esm --outfile=dist/aidetector.esm.js"
+  },
+  "devDependencies": {
+    "@assetfeed/ai-detector-core": "*"
+  },
+  "bugs": {
+    "url": "https://github.com/assetfeed/ai-detector/issues"
+  }
+}

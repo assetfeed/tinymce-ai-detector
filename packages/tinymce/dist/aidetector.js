@@ -1,5 +1,49 @@
 (() => {
-  // src/bar.js
+  // ../core/src/api.js
+  var DEFAULT_ENDPOINT = "https://api.assetfeed.com/api/v1/ai-detector/checks";
+  var ERRORS = {
+    401: "The AI check needs a valid AssetFeed API key.",
+    402: "Not enough credits for this check.",
+    429: "Too many checks at once. Try again in a minute.",
+    503: "The detector is busy, try again in a minute."
+  };
+  function errorLinks(source) {
+    const utm = `utm_source=${source}&utm_medium=plugin`;
+    return {
+      401: { text: "Get an API key", href: `https://assetfeed.com/api-keys?${utm}` },
+      402: { text: "See plans", href: `https://assetfeed.com/pricing?${utm}` }
+    };
+  }
+  var DetectorError = class extends Error {
+    constructor(status, message) {
+      super(message || "");
+      this.status = status;
+    }
+  };
+  async function requestCheck({ text, endpoint = DEFAULT_ENDPOINT, apiKey = "", unreachable = "Could not reach the AI detector." }) {
+    let response;
+    try {
+      response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json", ...apiKey ? { "X-Api-Token": apiKey } : {} },
+        body: JSON.stringify({ text })
+      });
+    } catch (e) {
+      throw new DetectorError(0, unreachable);
+    }
+    const body = await response.json().catch(() => null);
+    if (!response.ok || !body?.success) {
+      throw new DetectorError(response.status, body?.error?.message || body?.message);
+    }
+    return body.data;
+  }
+  function isDark(el2) {
+    const [r, g, b] = (getComputedStyle(el2).color.match(/\d+(\.\d+)?/g) || [0, 0, 0]).map(Number);
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b > 140;
+  }
+  var escapeHtml = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+
+  // ../core/src/bar.js
   var CSS = `
 .tox .aid-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 6px 8px; border-top: 1px solid rgb(0 0 0 / .08);
   font: 13px/1.2 ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; color: #111827; background: transparent; }
@@ -48,10 +92,10 @@
   var VIEW_LABEL = { highlight: "Highlight passages", bars: "Side bars only", off: "Hide marks" };
   var LEVEL = { ai: "high", unsure: "mid", human: "low" };
   var el = (doc, tag, cls, attrs = {}) => Object.assign(doc.createElement(tag), cls ? { className: cls } : {}, attrs);
-  function createBar({ container, t, onRun, onView }) {
-    const doc = container.ownerDocument;
-    if (!doc.getElementById("aid-bar-style")) {
-      doc.head.appendChild(el(doc, "style", "", { id: "aid-bar-style", textContent: CSS }));
+  function createBar({ doc, scope = "", t, onRun, onView }) {
+    const styleId = `aid-bar-style${scope ? `-${scope.replace(/\W/g, "")}` : ""}`;
+    if (!doc.getElementById(styleId)) {
+      doc.head.appendChild(el(doc, "style", "", { id: styleId, textContent: CSS.replaceAll(".tox ", scope ? `${scope} ` : "") }));
     }
     const bar = el(doc, "div", "aid-bar");
     const badge = el(doc, "span", "aid-badge");
@@ -86,15 +130,9 @@
     });
     run.addEventListener("click", () => onRun());
     bar.append(badge, views, el(doc, "span", "aid-spacer"), when, run);
-    const statusbar = container.querySelector(".tox-statusbar");
-    if (statusbar) {
-      statusbar.before(bar);
-    } else {
-      (container.querySelector(".tox-editor-container") || container).appendChild(bar);
-    }
     function render(s) {
       bar.classList.toggle("is-dark", s.dark);
-      bar.style.background = statusbar ? getComputedStyle(statusbar).backgroundColor : "";
+      bar.style.background = s.background || "";
       badge.className = `aid-badge${s.status === "ok" ? ` aid-badge--${LEVEL[s.kind] ?? "mid"}` : ""}${s.status === "busy" ? " is-busy" : ""}`;
       label.textContent = {
         idle: t("AI check: not run yet"),
@@ -115,10 +153,10 @@
       run.disabled = s.status === "busy";
       run.textContent = s.status === "idle" ? t("Check for AI writing") : t("Recheck");
     }
-    return { render, remove: () => bar.remove() };
+    return { el: bar, render, remove: () => bar.remove() };
   }
 
-  // src/card.js
+  // ../core/src/card.js
   var CSS2 = `
 .aid-card { --fg: oklch(64.6% 0.222 41.116); --text: oklch(55.3% 0.195 38.402); --tint: color-mix(in srgb, oklch(64.6% 0.222 41.116) 15%, transparent);
   position: fixed; z-index: 1400; box-sizing: border-box; width: 224px; padding: 12px 14px; border-radius: 14px; background: #fff; color: #111827;
@@ -176,7 +214,7 @@
     return { show, remove: () => el2.remove() };
   }
 
-  // src/marks.js
+  // ../core/src/marks.js
   var BLOCKS = "p,h1,h2,h3,h4,h5,h6,li,blockquote,td,th,div,pre,dt,dd,figcaption,caption,address";
   var INNER = /^(UL|OL|TABLE|BLOCKQUOTE|P|DIV|H[1-6])$/;
   var MIN_MARK_WORDS = 12;
@@ -262,7 +300,7 @@
   }
   var LABEL = { ai: "Likely AI", human: "Likely human", unsure: "Unsure" };
 
-  // src/layer.js
+  // ../core/src/layer.js
   var PALETTE = {
     light: {
       ai: { accent: "oklch(64.6% 0.222 41.116)", bar: "color-mix(in oklab, oklch(70.5% 0.213 47.604) 85%, #fff)", tint: "color-mix(in srgb, oklch(64.6% 0.222 41.116) 15%, transparent)" },
@@ -569,33 +607,11 @@ ${s} > u[data-kind="${kind}"] { background: ${p[kind].accent}; }`).join("");
   };
 
   // src/index.js
-  var DEFAULT_ENDPOINT = "https://api.assetfeed.com/api/v1/ai-detector/checks";
   var ICON = (paths) => `<svg width="24" height="24" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${paths}</g></svg>`;
   var ICON_CHECK = ICON('<path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 8h8"/><path d="M7 12h10"/><path d="M7 16h6"/>');
   var ICON_MARKS = ICON('<path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/>');
-  var ERRORS = {
-    401: "The AI check needs a valid AssetFeed API key.",
-    402: "Not enough credits for this check.",
-    429: "Too many checks at once. Try again in a minute.",
-    503: "The detector is busy, try again in a minute."
-  };
-  var UTM = "utm_source=tinymce-ai-detector&utm_medium=plugin";
-  var LINKS = {
-    401: { text: "Get an API key", href: `https://assetfeed.com/api-keys?${UTM}` },
-    402: { text: "See plans", href: `https://assetfeed.com/pricing?${UTM}` }
-  };
-  var escapeHtml = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
-  var DetectorError = class extends Error {
-    constructor(status, message) {
-      super(message || "");
-      this.status = status;
-    }
-  };
+  var LINKS = errorLinks("tinymce-ai-detector");
   var opaque = (color) => color && color !== "transparent" && !/rgba\(.*,\s*0\)$/.test(color);
-  function isDark(el2) {
-    const [r, g, b] = (getComputedStyle(el2).color.match(/\d+(\.\d+)?/g) || [0, 0, 0]).map(Number);
-    return 0.2126 * r + 0.7152 * g + 0.0722 * b > 140;
-  }
   function plugin(editor) {
     const option = editor.options.register;
     option("aidetector_endpoint", { processor: "string", default: DEFAULT_ENDPOINT });
@@ -624,22 +640,7 @@ ${s} > u[data-kind="${kind}"] { background: ${p[kind].accent}; }`).join("");
       if (custom) {
         return custom({ text });
       }
-      const key = editor.options.get("aidetector_api_key");
-      let response;
-      try {
-        response = await fetch(editor.options.get("aidetector_endpoint"), {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Accept: "application/json", ...key ? { "X-Api-Token": key } : {} },
-          body: JSON.stringify({ text })
-        });
-      } catch (e) {
-        throw new DetectorError(0, t("Could not reach the AI detector."));
-      }
-      const body = await response.json().catch(() => null);
-      if (!response.ok || !body?.success) {
-        throw new DetectorError(response.status, body?.error?.message || body?.message);
-      }
-      return body.data;
+      return requestCheck({ text, endpoint: editor.options.get("aidetector_endpoint"), apiKey: editor.options.get("aidetector_api_key"), unreachable: t("Could not reach the AI detector.") });
     }
     function mount() {
       if (painter || editor.inline) {
@@ -675,13 +676,16 @@ ${s} > u[data-kind="${kind}"] { background: ${p[kind].accent}; }`).join("");
     }
     function renderBar() {
       const result = state?.result;
+      const statusbar = editor.getContainer().querySelector(".tox-statusbar");
       bar?.render({
         status: busy ? "busy" : state ? "ok" : stale ? "stale" : "idle",
         kind: result ? kindOf(result) ?? "unsure" : null,
         percent: result ? percent(result.ai_fraction) : 0,
         view,
         checkedAt: state?.checkedAt,
-        dark: isDark(editor.getContainer().querySelector(".tox-statusbar") || editor.getContainer())
+        dark: isDark(statusbar || editor.getContainer()),
+        // The frame between the text and the status bar is see-through: the bar takes the status bar's colour.
+        background: statusbar ? getComputedStyle(statusbar).backgroundColor : ""
       });
     }
     function paint() {
@@ -757,7 +761,14 @@ ${s} > u[data-kind="${kind}"] { background: ${p[kind].accent}; }`).join("");
     });
     editor.on("init", () => {
       if (!editor.inline) {
-        bar = createBar({ container: editor.getContainer(), t, onRun: check, onView: setView });
+        const container = editor.getContainer();
+        const statusbar = container.querySelector(".tox-statusbar");
+        bar = createBar({ doc: container.ownerDocument, scope: ".tox", t, onRun: check, onView: setView });
+        if (statusbar) {
+          statusbar.before(bar.el);
+        } else {
+          (container.querySelector(".tox-editor-container") || container).appendChild(bar.el);
+        }
         renderBar();
       }
     });

@@ -11,49 +11,22 @@
  *   aidetector_request: async ({ text }) => answer  // or any transport you like
  */
 
-import { VIEWS, createBar } from './bar.js'
-import { createCard } from './card.js'
-import { MarkPainter, layerCss } from './layer.js'
-import { LABEL, collectBlocks, kindOf, marksFor, percent } from './marks.js'
+import { DEFAULT_ENDPOINT, DetectorError, ERRORS, errorLinks, escapeHtml, isDark, requestCheck } from '@assetfeed/ai-detector-core/api.js'
+import { VIEWS, createBar } from '@assetfeed/ai-detector-core/bar.js'
+import { createCard } from '@assetfeed/ai-detector-core/card.js'
+import { MarkPainter, layerCss } from '@assetfeed/ai-detector-core/layer.js'
+import { LABEL, collectBlocks, kindOf, marksFor, percent } from '@assetfeed/ai-detector-core/marks.js'
 
-export const DEFAULT_ENDPOINT = 'https://api.assetfeed.com/api/v1/ai-detector/checks'
+export { DEFAULT_ENDPOINT }
 
 // Lucide ScanText and Eye (ISC licence), drawn with strokes on the 24px grid of the editor's icons.
 const ICON = (paths) => `<svg width="24" height="24" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${paths}</g></svg>`
 const ICON_CHECK = ICON('<path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 8h8"/><path d="M7 12h10"/><path d="M7 16h6"/>')
 const ICON_MARKS = ICON('<path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/>')
 
-const ERRORS = {
-    401: 'The AI check needs a valid AssetFeed API key.',
-    402: 'Not enough credits for this check.',
-    429: 'Too many checks at once. Try again in a minute.',
-    503: 'The detector is busy, try again in a minute.',
-}
-
-// Where a developer gets a key or more credits. The UTM tags show in AssetFeed's analytics which visits came from the plugin.
-const UTM = 'utm_source=tinymce-ai-detector&utm_medium=plugin'
-const LINKS = {
-    401: { text: 'Get an API key', href: `https://assetfeed.com/api-keys?${UTM}` },
-    402: { text: 'See plans', href: `https://assetfeed.com/pricing?${UTM}` },
-}
-
-const escapeHtml = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
-
-class DetectorError extends Error {
-    constructor(status, message) {
-        super(message || '')
-        this.status = status
-    }
-}
+const LINKS = errorLinks('tinymce-ai-detector')
 
 const opaque = (color) => color && color !== 'transparent' && !/rgba\(.*,\s*0\)$/.test(color)
-
-/** Light text on the page means a dark theme: the marks and the card follow it. */
-function isDark(el) {
-    const [r, g, b] = (getComputedStyle(el).color.match(/\d+(\.\d+)?/g) || [0, 0, 0]).map(Number)
-
-    return 0.2126 * r + 0.7152 * g + 0.0722 * b > 140
-}
 
 export default function plugin(editor) {
     const option = editor.options.register
@@ -95,26 +68,7 @@ export default function plugin(editor) {
             return custom({ text })
         }
 
-        const key = editor.options.get('aidetector_api_key')
-        let response
-
-        try {
-            response = await fetch(editor.options.get('aidetector_endpoint'), {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...(key ? { 'X-Api-Token': key } : {}) },
-                body: JSON.stringify({ text }),
-            })
-        } catch (e) {
-            throw new DetectorError(0, t('Could not reach the AI detector.'))
-        }
-
-        const body = await response.json().catch(() => null)
-
-        if (!response.ok || !body?.success) {
-            throw new DetectorError(response.status, body?.error?.message || body?.message)
-        }
-
-        return body.data
+        return requestCheck({ text, endpoint: editor.options.get('aidetector_endpoint'), apiKey: editor.options.get('aidetector_api_key'), unreachable: t('Could not reach the AI detector.') })
     }
 
     /** The layer beside the text and the card, made on the first answer. Inline editors get the summary only. */
@@ -161,6 +115,7 @@ export default function plugin(editor) {
 
     function renderBar() {
         const result = state?.result
+        const statusbar = editor.getContainer().querySelector('.tox-statusbar')
 
         bar?.render({
             status: busy ? 'busy' : state ? 'ok' : stale ? 'stale' : 'idle',
@@ -168,7 +123,9 @@ export default function plugin(editor) {
             percent: result ? percent(result.ai_fraction) : 0,
             view,
             checkedAt: state?.checkedAt,
-            dark: isDark(editor.getContainer().querySelector('.tox-statusbar') || editor.getContainer()),
+            dark: isDark(statusbar || editor.getContainer()),
+            // The frame between the text and the status bar is see-through: the bar takes the status bar's colour.
+            background: statusbar ? getComputedStyle(statusbar).backgroundColor : '',
         })
     }
 
@@ -267,7 +224,16 @@ export default function plugin(editor) {
     })
     editor.on('init', () => {
         if (!editor.inline) {
-            bar = createBar({ container: editor.getContainer(), t, onRun: check, onView: setView })
+            const container = editor.getContainer()
+            const statusbar = container.querySelector('.tox-statusbar')
+
+            bar = createBar({ doc: container.ownerDocument, scope: '.tox', t, onRun: check, onView: setView })
+
+            if (statusbar) {
+                statusbar.before(bar.el)
+            } else {
+                (container.querySelector('.tox-editor-container') || container).appendChild(bar.el)
+            }
             renderBar()
         }
     })

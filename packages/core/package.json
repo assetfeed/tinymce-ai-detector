@@ -1,0 +1,14 @@
+{
+  "name": "@assetfeed/ai-detector-core",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Shared code of the AssetFeed AI detector editor plugins: text collection, the API call, the marks layer, the hover card and the bar. Bundled into each plugin, not published.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    "./*": "./src/*"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  }
+}
