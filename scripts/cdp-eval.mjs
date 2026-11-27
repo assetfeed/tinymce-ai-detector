@@ -1,6 +1,6 @@
 // Dev helper: open a URL in a private headless Chrome and print what an async function returns.
 // node scripts/cdp-eval.mjs <url> <file-with-async-arrow-function> [width]
-// SCREENSHOT=/abs/path.png saves the viewport after the function ran; COOKIE='name=value;domain' sets a cookie before navigating.
+// DPR=2 renders at that pixel ratio; SCREENSHOT=/abs/path.png saves the viewport after the function ran; COOKIE='name=value;domain' sets a cookie before navigating.
 // ponytail: tiny CDP client on Node's built-in WebSocket, no puppeteer; one page, one evaluation.
 import { spawn } from 'node:child_process'
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
@@ -35,6 +35,7 @@ try {
     await send('Runtime.enable')
     await send('Page.enable')
     await send('Network.enable')
+    if (process.env.DPR) await send('Emulation.setDeviceMetricsOverride', { width: Number(width), height: 900, deviceScaleFactor: Number(process.env.DPR), mobile: false })
     if (process.env.COOKIE) {
         const [pair, domain] = process.env.COOKIE.split(';')
         const [name, ...value] = pair.split('=')
