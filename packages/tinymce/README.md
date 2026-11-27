@@ -30,7 +30,7 @@ tinymce.init({
   selector: '#editor',
   plugins: 'aidetector',
   toolbar: 'undo redo | bold italic | aidetector aidetectormarks',
-  aidetector_endpoint: '/api/ai-check', // your server route, see below
+  aidetector_api_key: 'YOUR_ASSETFEED_API_KEY', // staff-only editors; see below for a server route
 })
 ```
 
@@ -41,15 +41,15 @@ tinymce.init({
   selector: '#editor',
   external_plugins: { aidetector: 'https://cdn.jsdelivr.net/npm/@assetfeed/tinymce-ai-detector@0.1/dist/aidetector.min.js' },
   toolbar: 'aidetector aidetectormarks',
-  aidetector_endpoint: '/api/ai-check',
+  aidetector_api_key: 'YOUR_ASSETFEED_API_KEY',
 })
 ```
 
 ## Connect the detector
 
-Checks spend credits on an AssetFeed account. Free accounts include 500 credits per month, and one check uses 5 credits ([plans](https://assetfeed.com/pricing?utm_source=tinymce-ai-detector&utm_medium=readme)). Create an API key at [assetfeed.com/api-keys](https://assetfeed.com/api-keys?utm_source=tinymce-ai-detector&utm_medium=readme) and keep it on your server: a key written into the page can be read by anyone who opens it.
+Checks spend credits on an AssetFeed account. Free accounts include 500 credits per month, and one check uses 5 credits ([plans](https://assetfeed.com/pricing?utm_source=tinymce-ai-detector&utm_medium=readme)). Create an API key at [assetfeed.com/api-keys](https://assetfeed.com/api-keys?utm_source=tinymce-ai-detector&utm_medium=readme).
 
-Your server route forwards the request body to the AssetFeed API and adds the key:
+The API accepts calls from any website, so passing the key with `aidetector_api_key` works as is. Anyone who opens the editor page can read that key and spend its credits, so do this only in an admin area your own team uses. On a page other people can open, set `aidetector_endpoint` to a route on your server that forwards the request body to the AssetFeed API and adds the key:
 
 ```js
 // Node 18+ (Express)
@@ -85,7 +85,7 @@ Put your own sign-in check in front of that route, otherwise anyone who finds it
 | Option | Default | |
 |---|---|---|
 | `aidetector_endpoint` | `https://api.assetfeed.com/api/v1/ai-detector/checks` | Where the text is posted as `{ "text": "..." }`. |
-| `aidetector_api_key` | `''` | Sent as `X-Api-Token`. Only for internal tools: the key is visible in the page. |
+| `aidetector_api_key` | `''` | Sent as `X-Api-Token`. Anyone who opens the page can read it, so use it only in editors your own team opens. |
 | `aidetector_request` | none | `async ({ text }) => answer`: your own transport. Return the `data` object of the API answer. |
 
 ## Toolbar, menu and commands

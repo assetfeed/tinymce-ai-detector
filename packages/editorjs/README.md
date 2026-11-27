@@ -27,16 +27,16 @@ import { AiDetector } from '@assetfeed/editorjs-ai-detector'
 const editor = new EditorJS({ holder: 'editorjs' })
 await editor.isReady
 
-const detector = new AiDetector(editor, { holder: 'editorjs', endpoint: '/api/ai-check' }) // your server route, see below
+const detector = new AiDetector(editor, { holder: 'editorjs', apiKey: 'YOUR_ASSETFEED_API_KEY' }) // staff-only editors; see below for a server route
 ```
 
 Create the detector after `editor.isReady` has resolved. Without a bundler, load `dist/aidetector.js` with a script tag: it sets `window.AiDetector`, used the same way.
 
 ## Connect the detector
 
-Checks spend credits on an AssetFeed account. Free accounts include 500 credits per month, and one check uses 5 credits ([plans](https://assetfeed.com/pricing?utm_source=editorjs-ai-detector&utm_medium=readme)). Create an API key at [assetfeed.com/api-keys](https://assetfeed.com/api-keys?utm_source=editorjs-ai-detector&utm_medium=readme) and keep it on your server: a key written into the page can be read by anyone who opens it.
+Checks spend credits on an AssetFeed account. Free accounts include 500 credits per month, and one check uses 5 credits ([plans](https://assetfeed.com/pricing?utm_source=editorjs-ai-detector&utm_medium=readme)). Create an API key at [assetfeed.com/api-keys](https://assetfeed.com/api-keys?utm_source=editorjs-ai-detector&utm_medium=readme).
 
-Your server route forwards the request body to the AssetFeed API and adds the key:
+The API accepts calls from any website, so passing the key with `apiKey` works as is. Anyone who opens the editor page can read that key and spend its credits, so do this only in an admin area your own team uses. On a page other people can open, set `endpoint` to a route on your server that forwards the request body to the AssetFeed API and adds the key:
 
 ```js
 // Node 18+ (Express)
@@ -60,7 +60,7 @@ Put your own sign-in check in front of that route, otherwise anyone who finds it
 |---|---|---|
 | `holder` | the editor's own `holder`, else `'editorjs'` | The element id or element the editor lives in. |
 | `endpoint` | `https://api.assetfeed.com/api/v1/ai-detector/checks` | Where the text is posted as `{ "text": "..." }`. |
-| `apiKey` | `''` | Sent as `X-Api-Token`. Only for internal tools: the key is visible in the page. |
+| `apiKey` | `''` | Sent as `X-Api-Token`. Anyone who opens the page can read it, so use it only in editors your own team opens. |
 | `request` | none | `async ({ text }) => answer`: your own transport. Return the `data` object of the API answer. |
 | `bar` | `true` | Show the bar right after the holder. Set `false` to build your own controls. |
 | `onResult` | none | `(result) => void`, called after each answer. |

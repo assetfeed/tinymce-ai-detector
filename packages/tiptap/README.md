@@ -31,16 +31,16 @@ const editor = new Editor({
   element: document.querySelector('#editor'),
   extensions: [
     StarterKit,
-    AiDetector.configure({ endpoint: '/api/ai-check' }), // your server route, see below
+    AiDetector.configure({ apiKey: 'YOUR_ASSETFEED_API_KEY' }), // staff-only editors; see below for a server route
   ],
 })
 ```
 
 ## Connect the detector
 
-Checks spend credits on an AssetFeed account. Free accounts include 500 credits per month, and one check uses 5 credits ([plans](https://assetfeed.com/pricing?utm_source=tiptap-ai-detector&utm_medium=readme)). Create an API key at [assetfeed.com/api-keys](https://assetfeed.com/api-keys?utm_source=tiptap-ai-detector&utm_medium=readme) and keep it on your server: a key written into the page can be read by anyone who opens it.
+Checks spend credits on an AssetFeed account. Free accounts include 500 credits per month, and one check uses 5 credits ([plans](https://assetfeed.com/pricing?utm_source=tiptap-ai-detector&utm_medium=readme)). Create an API key at [assetfeed.com/api-keys](https://assetfeed.com/api-keys?utm_source=tiptap-ai-detector&utm_medium=readme).
 
-Your server route forwards the request body to the AssetFeed API and adds the key:
+The API accepts calls from any website, so passing the key with `apiKey` works as is. Anyone who opens the editor page can read that key and spend its credits, so do this only in an admin area your own team uses. On a page other people can open, set `endpoint` to a route on your server that forwards the request body to the AssetFeed API and adds the key:
 
 ```js
 // Node 18+ (Express)
@@ -61,7 +61,7 @@ Put your own sign-in check in front of that route, otherwise anyone who finds it
 | Option | Default | |
 |---|---|---|
 | `endpoint` | `https://api.assetfeed.com/api/v1/ai-detector/checks` | Where the text is posted as `{ "text": "..." }`. |
-| `apiKey` | `''` | Sent as `X-Api-Token`. Only for internal tools: the key is visible in the page. |
+| `apiKey` | `''` | Sent as `X-Api-Token`. Anyone who opens the page can read it, so use it only in editors your own team opens. |
 | `request` | none | `async ({ text }) => answer`: your own transport. Return the `data` object of the API answer. |
 | `bar` | `true` | Show the bar right after the editor element. Set `false` to build your own controls. |
 | `onResult` | none | `(result) => void`, called after each answer. |
