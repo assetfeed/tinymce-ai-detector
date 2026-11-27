@@ -808,7 +808,7 @@ function plugin(editor) {
     onAction: check
   });
   return {
-    getMetadata: () => ({ name: "AI detector by AssetFeed", url: "https://github.com/assetfeed/tinymce-ai-detector" })
+    getMetadata: () => ({ name: "AI detector by AssetFeed", url: "https://github.com/assetfeed/ai-detector-plugins" })
   };
 }
 function register(...globals) {

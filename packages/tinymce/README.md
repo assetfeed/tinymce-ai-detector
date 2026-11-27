@@ -10,9 +10,9 @@ Under the text, a bar shows the share of AI text, with a Recheck button and a sw
 
 The marks live in a separate layer next to the document, not in it. `getContent()` and the undo history never see them, so the saved HTML is exactly what was typed.
 
-![AI detector marks beside the text in TinyMCE](https://raw.githubusercontent.com/assetfeed/tinymce-ai-detector/main/docs/screenshot.png)
+![AI detector marks beside the text in TinyMCE](https://raw.githubusercontent.com/assetfeed/ai-detector-plugins/main/docs/screenshot.png)
 
-**[Try the demo](https://assetfeed.github.io/tinymce-ai-detector/demo/)**. It replays a recorded answer for the sample text, so it works without an API key.
+**[Try the demo](https://assetfeed.github.io/ai-detector-plugins/demo/)**. It replays a recorded answer for the sample text, so it works without an API key.
 
 Tested on TinyMCE 6.8.6, 7.9.3 and 8.10.2 and on HugeRTE 1.0.15, in the classic (iframe) editor. Inline editors get the summary notification only. English text only for now.
 

@@ -29,10 +29,10 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/assetfeed/ai-detector.git",
+    "url": "git+https://github.com/assetfeed/ai-detector-plugins.git",
     "directory": "packages/tinymce"
   },
-  "homepage": "https://github.com/assetfeed/ai-detector/tree/main/packages/tinymce#readme",
+  "homepage": "https://github.com/assetfeed/ai-detector-plugins/tree/main/packages/tinymce#readme",
   "peerDependencies": {
     "hugerte": ">=1",
     "tinymce": ">=6"
@@ -52,6 +52,6 @@
     "@assetfeed/ai-detector-core": "*"
   },
   "bugs": {
-    "url": "https://github.com/assetfeed/ai-detector/issues"
+    "url": "https://github.com/assetfeed/ai-detector-plugins/issues"
   }
 }
