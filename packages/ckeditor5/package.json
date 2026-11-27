@@ -1,0 +1,48 @@
+{
+  "name": "@assetfeed/ckeditor5-ai-detector",
+  "version": "0.1.0",
+  "description": "AI detector plugin for CKEditor 5. Marks likely AI-written passages beside the text and leaves the editor data untouched.",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "ckeditor5",
+    "ckeditor5-plugin",
+    "ckeditor",
+    "ai-detector",
+    "ai-content-detector",
+    "ai-text-detector",
+    "ai-detection",
+    "wysiwyg",
+    "rich-text-editor"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/assetfeed/ai-detector-plugins.git",
+    "directory": "packages/ckeditor5"
+  },
+  "homepage": "https://github.com/assetfeed/ai-detector-plugins/tree/main/packages/ckeditor5#readme",
+  "peerDependencies": {
+    "ckeditor5": ">=42.0.0"
+  },
+  "scripts": {
+    "build": "esbuild src/index.js --bundle --format=esm --external:ckeditor5 --outfile=dist/index.js",
+    "test": "node --test test/*.test.js"
+  },
+  "devDependencies": {
+    "@assetfeed/ai-detector-core": "*"
+  },
+  "bugs": {
+    "url": "https://github.com/assetfeed/ai-detector-plugins/issues"
+  }
+}

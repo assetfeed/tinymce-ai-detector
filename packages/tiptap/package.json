@@ -1,6 +1,6 @@
 {
   "name": "@assetfeed/tiptap-ai-detector",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "AI detector extension for Tiptap. Marks likely AI-written passages beside the text and leaves the document untouched.",
   "license": "MIT",
   "type": "module",

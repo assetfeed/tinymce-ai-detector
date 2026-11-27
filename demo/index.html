@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AI detector demo for TinyMCE, HugeRTE, Tiptap and Editor.js</title>
+<title>AI detector demo for TinyMCE, HugeRTE, Tiptap, Editor.js, CKEditor 5 and Portable Text</title>
 <style>
   body { margin: 0; padding: 24px 16px 48px; background: #f6f7f8; color: #111827; font: 15px/1.5 ui-sans-serif, system-ui, sans-serif; }
   main { max-width: 860px; margin: 0 auto; }
@@ -16,13 +16,17 @@
   #tiptap-editor .ProseMirror p { margin: 0 0 12px; }
   #editorjs-editor { border: 1px solid #d1d5db; border-radius: 6px 6px 0 0; background: #fff; padding: 16px 20px 16px 48px; min-height: 360px; }
   #editorjs-editor .ce-paragraph { line-height: 1.5; }
+  #ckeditor-editor .ck-editor__editable { min-height: 360px; }
+  #portabletext-editor [data-slate-editor] { min-height: 360px; padding: 16px 20px 16px 28px; border: 1px solid #d1d5db; border-radius: 6px 6px 0 0; background: #fff; outline: none; }
+  #portabletext-editor [data-pt-block] { margin: 0 0 12px; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/tinymce@8.10.2/tinymce.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/hugerte@1.0.15/hugerte.min.js"></script>
 <script src="../packages/tinymce/dist/aidetector.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@editorjs/editorjs@2.31.7/dist/editorjs.umd.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ckeditor5@49.1.0/dist/browser/ckeditor5.css">
 <script type="importmap">
-{ "imports": { "@tiptap/core": "https://esm.sh/@tiptap/core@3.35.1", "@tiptap/starter-kit": "https://esm.sh/@tiptap/starter-kit@3.35.1" } }
+{ "imports": { "@tiptap/core": "https://esm.sh/@tiptap/core@3.35.1", "@tiptap/starter-kit": "https://esm.sh/@tiptap/starter-kit@3.35.1", "ckeditor5": "https://cdn.jsdelivr.net/npm/ckeditor5@49.1.0/dist/browser/ckeditor5.js", "react": "https://esm.sh/react@19.3.1", "react/compiler-runtime": "https://esm.sh/react@19.3.1/compiler-runtime", "react/jsx-runtime": "https://esm.sh/react@19.3.1/jsx-runtime", "react-dom": "https://esm.sh/react-dom@19.3.1?external=react", "react-dom/client": "https://esm.sh/react-dom@19.3.1/client?external=react", "@portabletext/editor": "https://esm.sh/@portabletext/editor@8.2.17?external=react", "@portabletext/editor/plugins": "https://esm.sh/@portabletext/editor@8.2.17/plugins?external=react" } }
 </script>
 </head>
 <body>
@@ -43,6 +47,13 @@
 
   <h2>Editor.js 2</h2>
   <div id="editorjs-editor"></div>
+
+  <h2>CKEditor 5</h2>
+  <div id="ckeditor-editor"></div>
+
+  <h2>Portable Text (Sanity)</h2>
+  <p class="lead">The editor of a Sanity Studio field, @portabletext/editor 8, with the Studio plugin's input around it. The page has no Studio or Sanity project behind it.</p>
+  <div id="portabletext-editor"></div>
 </main>
 <script>
   const sample = fetch('sample.txt').then((r) => r.text())
@@ -96,6 +107,51 @@
   window.editorjsEditor = new EditorJS({ holder: 'editorjs-editor', data: { blocks }, minHeight: 0 })
   await window.editorjsEditor.isReady
   window.editorjsDetector = new AiDetector(window.editorjsEditor, { holder: 'editorjs-editor', request: replay })
+</script>
+<script type="module">
+  import { ClassicEditor, Essentials, Paragraph, Heading, Bold, Italic, List, Undo } from 'ckeditor5'
+  import { AiDetector } from '../packages/ckeditor5/dist/index.js'
+
+  const text = await sample
+  const initialData = text.trim().split('\n').map((l) => `<p>${l.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</p>`).join('')
+
+  window.ckeditorEditor = await ClassicEditor.create(document.querySelector('#ckeditor-editor'), {
+    licenseKey: 'GPL',
+    plugins: [Essentials, Paragraph, Heading, Bold, Italic, List, Undo, AiDetector],
+    toolbar: ['undo', 'redo', '|', 'heading', '|', 'bold', 'italic', '|', 'bulletedList', 'numberedList', '|', 'checkAiWriting'],
+    initialData,
+    aiDetector: { request: replay },
+  })
+</script>
+<script type="module">
+  import { createElement as h, useState } from 'react'
+  import { createRoot } from 'react-dom/client'
+  import { defineSchema, EditorProvider, PortableTextEditable, useEditor } from '@portabletext/editor'
+  import { EventListenerPlugin } from '@portabletext/editor/plugins'
+  import { AiDetectorInput } from '../packages/sanity/dist/input.js'
+
+  const text = await sample
+  const initialValue = text.trim().split('\n').map((line, i) => ({ _type: 'block', _key: `b${i}`, style: 'normal', markDefs: [], children: [{ _type: 'span', _key: `s${i}`, text: line, marks: [] }] }))
+  const schemaDefinition = defineSchema({ styles: [{ name: 'normal' }], decorators: [], annotations: [], lists: [], inlineObjects: [], blockObjects: [] })
+
+  window.portableTextValue = initialValue
+
+  const Handle = () => { window.portableTextEditor = useEditor(); return null }
+
+  // What a Studio field passes to its input: the value, and renderDefault for the editor itself.
+  function Field() {
+    const [value, setValue] = useState(initialValue)
+    const input = {
+      value,
+      renderDefault: () => h(EditorProvider, { initialConfig: { schemaDefinition, initialValue } },
+        h(EventListenerPlugin, { on: (event) => { if (event.type === 'mutation') { window.portableTextValue = event.value; setValue(event.value) } } }),
+        h(Handle),
+        h(PortableTextEditable)),
+    }
+    return h(AiDetectorInput, { input, options: { request: replay } })
+  }
+
+  createRoot(document.querySelector('#portabletext-editor')).render(h(Field))
 </script>
 </body>
 </html>

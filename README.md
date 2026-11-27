@@ -12,7 +12,7 @@ The marks are drawn in a separate layer beside the text. They never reach the sa
 
 ![AI detector marks beside the text in TinyMCE](docs/screenshot.png)
 
-**[Try the demo](https://assetfeed.github.io/ai-detector-plugins/demo/)** with TinyMCE, HugeRTE, Tiptap and Editor.js. It replays a recorded answer for the sample text, so it works without an API key.
+**[Try the demo](https://assetfeed.github.io/ai-detector-plugins/demo/)** with TinyMCE, HugeRTE, Tiptap, Editor.js, CKEditor 5 and Portable Text. It replays a recorded answer for the sample text, so it works without an API key.
 
 ## Packages
 
@@ -21,6 +21,8 @@ The marks are drawn in a separate layer beside the text. They never reach the sa
 | TinyMCE, HugeRTE | [`@assetfeed/tinymce-ai-detector`](packages/tinymce/README.md) ([npm](https://www.npmjs.com/package/@assetfeed/tinymce-ai-detector)) | TinyMCE 6.8.6, 7.9.3 and 8.10.2; HugeRTE 1.0.15 |
 | Tiptap | [`@assetfeed/tiptap-ai-detector`](packages/tiptap/README.md) ([npm](https://www.npmjs.com/package/@assetfeed/tiptap-ai-detector)) | Tiptap 2.27.3 and 3.35.1 |
 | Editor.js | [`@assetfeed/editorjs-ai-detector`](packages/editorjs/README.md) ([npm](https://www.npmjs.com/package/@assetfeed/editorjs-ai-detector)) | Editor.js 2.31.7 |
+| CKEditor 5 | [`@assetfeed/ckeditor5-ai-detector`](packages/ckeditor5/README.md) | CKEditor 5 42.0.2, 44.3.0, 46.1.1, 47.7.6, 48.5.3 and 49.1.0 |
+| Sanity Studio | [`@assetfeed/sanity-ai-detector`](packages/sanity/README.md) | @portabletext/editor 3.3.14, 6.6.5 and 8.2.17, not run inside a Studio (see the README) |
 
 For Laravel Nova there is a detail-page field in a separate repository: [assetfeed/nova-ai-detector](https://github.com/assetfeed/nova-ai-detector).
 
