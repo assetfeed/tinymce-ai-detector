@@ -10,7 +10,7 @@ Under the text, a bar shows the share of AI text, with a Recheck button and a sw
 
 The marks live in a separate layer next to the document, not in it. `getContent()` and the undo history never see them, so the saved HTML is exactly what was typed.
 
-![AI detector marks beside the text in TinyMCE](docs/screenshot.png)
+![AI detector marks beside the text in TinyMCE](https://raw.githubusercontent.com/assetfeed/tinymce-ai-detector/main/docs/screenshot.png)
 
 **[Try the demo](https://assetfeed.github.io/tinymce-ai-detector/demo/)**. It replays a recorded answer for the sample text, so it works without an API key.
 
