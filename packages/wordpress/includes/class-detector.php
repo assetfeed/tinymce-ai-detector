@@ -103,6 +103,8 @@ final class Detector {
 				'timeout'             => 60,
 				'redirection'         => 0,
 				'limit_response_size' => MB_IN_BYTES,
+				// WordPress's default User-Agent carries the site URL; the readme promises nothing about the site is sent.
+				'user-agent'          => 'AI-Detector-by-AssetFeed/' . VERSION,
 				'headers'             => array(
 					'X-Api-Token'  => $key,
 					'Content-Type' => 'application/json',
