@@ -24,11 +24,13 @@ The marks are drawn in a separate layer beside the text. They never reach the sa
 
 For Laravel Nova there is a detail-page field in a separate repository: [assetfeed/nova-ai-detector](https://github.com/assetfeed/nova-ai-detector).
 
+For Filament there is a view-page entry in a separate repository: [assetfeed/filament-ai-detector](https://github.com/assetfeed/filament-ai-detector).
+
 ## Connect the detector
 
-Checks spend credits on an AssetFeed account. Free accounts include 500 credits per month, and one check uses 5 credits ([plans](https://assetfeed.com/pricing?utm_source=ai-detector-plugins&utm_medium=readme)). Create an API key at [assetfeed.com/api-keys](https://assetfeed.com/api-keys?utm_source=ai-detector-plugins&utm_medium=readme) and keep it on your server: a key written into the page can be read by anyone who opens it.
+Checks spend credits on an AssetFeed account. Free accounts include 500 credits per month, and one check uses 5 credits ([plans](https://assetfeed.com/pricing?utm_source=ai-detector-plugins&utm_medium=readme)). Create an API key at [assetfeed.com/api-keys](https://assetfeed.com/api-keys?utm_source=ai-detector-plugins&utm_medium=readme).
 
-Each package posts the text to a route on your server, which adds the key and forwards the request to the AssetFeed API. The package READMEs show that route in Node, and the TinyMCE one also in PHP. The Nova field runs the check on the server itself, with the key from `ASSETFEED_API_KEY`.
+The API accepts calls from any website, so you can pass the key to the plugin with the `apiKey` option. Anyone who opens the editor page can read that key and spend its credits, so do this only in an admin area your own team uses. On a page other people can open, post the text to a route on your server and add the key there: the package READMEs show that route in Node, and the TinyMCE one also in PHP. The Nova and Filament plugins run the check on the server itself, with the key from `ASSETFEED_API_KEY`.
 
 To check a text of your own without a key, use the [detector page](https://assetfeed.com/ai-content-detector?utm_source=ai-detector-plugins&utm_medium=readme), free while in beta.
 
