@@ -1,4 +1,3 @@
-<!-- DRAFT: copy review pending -->
 # AI detector extension for Tiptap
 
 An extension that checks a document for AI-written text. Run a check and the editor's text goes to the [AssetFeed AI content detector](https://assetfeed.com/ai-content-detector?utm_source=tiptap-ai-detector&utm_medium=readme). The answer comes back as marks beside the passages:
@@ -10,6 +9,8 @@ An extension that checks a document for AI-written text. Run a check and the edi
 Under the editor, a bar shows the share of AI text, with a Recheck button and a switch between highlights, side bars only and no marks.
 
 The marks live in a separate layer next to the editable element, not in the document. `getHTML()`, `getJSON()` and the undo history never see them, so the saved content is exactly what was typed.
+
+![AI detector marks beside the text in Tiptap](https://raw.githubusercontent.com/assetfeed/ai-detector-plugins/main/docs/screenshot-tiptap.png)
 
 **[Try the demo](https://assetfeed.github.io/ai-detector-plugins/demo/)**. It replays a recorded answer for the sample text, so it works without an API key.
 
@@ -75,7 +76,7 @@ Put your own sign-in check in front of that route, otherwise anyone who finds it
 | `editor.commands.clearAiMarks()` | Remove the marks. |
 | `editor.commands.setAiMarksView(view)` | `'highlight'`, `'bars'` or `'off'`. |
 
-`editor.storage.aiDetector` holds `status` (`idle`, `busy`, `ok`, `stale`), `result`, `kind`, `percent`, `view`, `checkedAt` and `notice`, so a headless UI can build its own controls. `await editor.storage.aiDetector.check()` runs a check and waits for it.
+`editor.storage.aiDetector` holds `status` (`idle`, `busy`, `ok`, `stale`), `result`, `kind`, `percent`, `view`, `checkedAt` and `notice`, so you can build your own controls on top of it. `await editor.storage.aiDetector.check()` runs a check and waits for the answer.
 
 A mark belongs to the text it was made for, so the first edit clears it and the bar asks for a recheck.
 
@@ -86,6 +87,8 @@ The extension sends one line per block (paragraph, heading, list item, quote, ta
 Checks made with an API key are not saved to a check history (see the [privacy policy](https://assetfeed.com/privacy-policy)). The score is an estimate, not proof of how a text was written.
 
 ## Development
+
+From the repository root:
 
 ```sh
 npm install

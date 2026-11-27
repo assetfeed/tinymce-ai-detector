@@ -1,4 +1,3 @@
-<!-- DRAFT: copy review pending -->
 # AI detector for Editor.js
 
 A small controller that checks an Editor.js document for AI-written text. Run a check and the editor's text goes to the [AssetFeed AI content detector](https://assetfeed.com/ai-content-detector?utm_source=editorjs-ai-detector&utm_medium=readme). The answer comes back as marks beside the passages:
@@ -9,7 +8,7 @@ A small controller that checks an Editor.js document for AI-written text. Run a 
 
 Under the editor, a bar shows the share of AI text, with a Recheck button and a switch between highlights, side bars only and no marks.
 
-The marks live in a separate layer next to the editor, not in a block. `editor.save()` and the undo history never see them, so the saved data is exactly what was typed.
+The marks live in a separate layer next to the editor, not in a block. `editor.save()` never sees them, so the saved data is exactly what was typed.
 
 **[Try the demo](https://assetfeed.github.io/ai-detector-plugins/demo/)**. It replays a recorded answer for the sample text, so it works without an API key.
 
@@ -31,7 +30,7 @@ await editor.isReady
 const detector = new AiDetector(editor, { holder: 'editorjs', endpoint: '/api/ai-check' }) // your server route, see below
 ```
 
-Without a bundler, load `dist/aidetector.js` and use `new AiDetector(editor, options)` from the global.
+Create the detector after `editor.isReady` has resolved. Without a bundler, load `dist/aidetector.js` with a script tag: it sets `window.AiDetector`, used the same way.
 
 ## Connect the detector
 
@@ -77,7 +76,7 @@ Put your own sign-in check in front of that route, otherwise anyone who finds it
 | `detector.setView(view)` | `'highlight'`, `'bars'` or `'off'`. |
 | `detector.destroy()` | Remove the marks, the bar and the listeners. Call it before `editor.destroy()`. |
 
-`detector.state` holds `status` (`idle`, `busy`, `ok`, `stale`), `result`, `kind`, `percent`, `view`, `checkedAt` and `notice`, so a headless UI can build its own controls.
+`detector.state` holds `status` (`idle`, `busy`, `ok`, `stale`), `result`, `kind`, `percent`, `view`, `checkedAt` and `notice`, so you can build your own controls on top of it.
 
 A mark belongs to the text it was made for, so the first edit clears it and the bar asks for a recheck.
 
@@ -88,6 +87,8 @@ The controller sends one line per block (paragraph, heading, list item, quote an
 Checks made with an API key are not saved to a check history (see the [privacy policy](https://assetfeed.com/privacy-policy)). The score is an estimate, not proof of how a text was written.
 
 ## Development
+
+From the repository root:
 
 ```sh
 npm install

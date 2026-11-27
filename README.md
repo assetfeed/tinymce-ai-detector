@@ -1,6 +1,6 @@
-# AI detector plugin for TinyMCE and HugeRTE
+# AI detector plugins for rich text editors
 
-A plugin that checks a document for AI-written text. Press a button and the editor's text goes to the [AssetFeed AI content detector](https://assetfeed.com/ai-content-detector?utm_source=tinymce-ai-detector&utm_medium=readme). The answer comes back as marks beside the passages:
+Plugins that check the text in an editor for AI writing. A check sends the text to the [AssetFeed AI content detector](https://assetfeed.com/ai-content-detector?utm_source=ai-detector-plugins&utm_medium=readme), and the answer comes back as marks beside the passages:
 
 - an orange bar for likely AI, amber for unsure, green for likely human;
 - a tint behind the passages the detector is most sure about;
@@ -8,108 +8,41 @@ A plugin that checks a document for AI-written text. Press a button and the edit
 
 Under the text, a bar shows the share of AI text, with a Recheck button and a switch between highlights, side bars only and no marks.
 
-The marks live in a separate layer next to the document, not in it. `getContent()` and the undo history never see them, so the saved HTML is exactly what was typed.
+The marks are drawn in a separate layer beside the text. They never reach the saved content or the undo history, so what gets saved is exactly what was typed.
 
 ![AI detector marks beside the text in TinyMCE](docs/screenshot.png)
 
-**[Try the demo](https://assetfeed.github.io/ai-detector-plugins/demo/)**. It replays a recorded answer for the sample text, so it works without an API key.
+**[Try the demo](https://assetfeed.github.io/ai-detector-plugins/demo/)** with TinyMCE, HugeRTE, Tiptap and Editor.js. It replays a recorded answer for the sample text, so it works without an API key.
 
-Tested on TinyMCE 6.8.6, 7.9.3 and 8.10.2 and on HugeRTE 1.0.15, in the classic (iframe) editor. Inline editors get the summary notification only. English text only for now.
+## Packages
 
-## Install
+| Editor | Package | Tested on |
+|---|---|---|
+| TinyMCE, HugeRTE | [`@assetfeed/tinymce-ai-detector`](packages/tinymce/README.md) ([npm](https://www.npmjs.com/package/@assetfeed/tinymce-ai-detector)) | TinyMCE 6.8.6, 7.9.3 and 8.10.2; HugeRTE 1.0.15 |
+| Tiptap | [`@assetfeed/tiptap-ai-detector`](packages/tiptap/README.md) ([npm](https://www.npmjs.com/package/@assetfeed/tiptap-ai-detector)) | Tiptap 2.27.3 and 3.35.1 |
+| Editor.js | [`@assetfeed/editorjs-ai-detector`](packages/editorjs/README.md) ([npm](https://www.npmjs.com/package/@assetfeed/editorjs-ai-detector)) | Editor.js 2.31.7 |
 
-```sh
-npm install @assetfeed/tinymce-ai-detector
-```
-
-```js
-import tinymce from 'tinymce'            // or: import hugerte from 'hugerte'
-import '@assetfeed/tinymce-ai-detector'  // registers the "aidetector" plugin on the editor global
-
-tinymce.init({
-  selector: '#editor',
-  plugins: 'aidetector',
-  toolbar: 'undo redo | bold italic | aidetector aidetectormarks',
-  aidetector_endpoint: '/api/ai-check', // your server route, see below
-})
-```
-
-Without a bundler, load the plugin file with `external_plugins`:
-
-```js
-tinymce.init({
-  selector: '#editor',
-  external_plugins: { aidetector: 'https://cdn.jsdelivr.net/npm/@assetfeed/tinymce-ai-detector@0.1/dist/aidetector.min.js' },
-  toolbar: 'aidetector aidetectormarks',
-  aidetector_endpoint: '/api/ai-check',
-})
-```
+For Laravel Nova there is a detail-page field in a separate repository: [assetfeed/nova-ai-detector](https://github.com/assetfeed/nova-ai-detector).
 
 ## Connect the detector
 
-Checks spend credits on an AssetFeed account. Free accounts include 500 credits per month, and one check uses 5 credits ([plans](https://assetfeed.com/pricing?utm_source=tinymce-ai-detector&utm_medium=readme)). Create an API key at [assetfeed.com/api-keys](https://assetfeed.com/api-keys?utm_source=tinymce-ai-detector&utm_medium=readme) and keep it on your server: a key written into the page can be read by anyone who opens it.
+Checks spend credits on an AssetFeed account. Free accounts include 500 credits per month, and one check uses 5 credits ([plans](https://assetfeed.com/pricing?utm_source=ai-detector-plugins&utm_medium=readme)). Create an API key at [assetfeed.com/api-keys](https://assetfeed.com/api-keys?utm_source=ai-detector-plugins&utm_medium=readme) and keep it on your server: a key written into the page can be read by anyone who opens it.
 
-Your server route forwards the request body to the AssetFeed API and adds the key:
+Each package posts the text to a route on your server, which adds the key and forwards the request to the AssetFeed API. The package READMEs show that route in Node, and the TinyMCE one also in PHP. The Nova field runs the check on the server itself, with the key from `ASSETFEED_API_KEY`.
 
-```js
-// Node 18+ (Express)
-app.post('/api/ai-check', express.json(), async (req, res) => {
-  const upstream = await fetch('https://api.assetfeed.com/api/v1/ai-detector/checks', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-Api-Token': process.env.ASSETFEED_API_KEY },
-    body: JSON.stringify({ text: String(req.body.text ?? '') }),
-  })
-  res.status(upstream.status).type('json').send(await upstream.text())
-})
-```
+To check a text of your own without a key, use the [detector page](https://assetfeed.com/ai-content-detector?utm_source=ai-detector-plugins&utm_medium=readme), free while in beta.
 
-```php
-// PHP
-$ch = curl_init('https://api.assetfeed.com/api/v1/ai-detector/checks');
-curl_setopt_array($ch, [
-    CURLOPT_POST => true,
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_HTTPHEADER => ['Content-Type: application/json', 'Accept: application/json', 'X-Api-Token: '.getenv('ASSETFEED_API_KEY')],
-    CURLOPT_POSTFIELDS => json_encode(['text' => (string) (json_decode(file_get_contents('php://input'), true)['text'] ?? '')]),
-]);
-$body = curl_exec($ch);
-http_response_code(curl_getinfo($ch, CURLINFO_RESPONSE_CODE));
-header('Content-Type: application/json');
-echo $body;
-```
+## Privacy
 
-Put your own sign-in check in front of that route, otherwise anyone who finds it can spend your credits.
-
-## Options
-
-| Option | Default | |
-|---|---|---|
-| `aidetector_endpoint` | `https://api.assetfeed.com/api/v1/ai-detector/checks` | Where the text is posted as `{ "text": "..." }`. |
-| `aidetector_api_key` | `''` | Sent as `X-Api-Token`. Only for internal tools: the key is visible in the page. |
-| `aidetector_request` | none | `async ({ text }) => answer`: your own transport. Return the `data` object of the API answer. |
-
-## Toolbar, menu and commands
-
-| Name | |
-|---|---|
-| `aidetector` | Toolbar button and menu item: check the text. |
-| `aidetectormarks` | Toolbar toggle: show or hide the marks. |
-| `AiDetectorCheck`, `AiDetectorClear`, `AiDetectorToggleMarks`, `AiDetectorSetView` | Commands for `editor.execCommand()`. `AiDetectorSetView` takes `'highlight'`, `'bars'` or `'off'`. |
-| `AiDetectorResult` | Editor event with `{ result }` after each answer, for your own display. |
-
-A mark belongs to the text it was made for, so the first edit clears it and the bar asks for a recheck. All interface strings go through `editor.translate()`, so the editor's language packs can translate them.
-
-## How the text is sent
-
-The plugin sends one line per block (paragraph, heading, list item, quote, table cell) and skips empty blocks. The detector scores windows of about 120 to 300 words and says which lines each window covers, which is how a mark finds its block.
-
-Checks made with an API key are not saved to a check history (see the [privacy policy](https://assetfeed.com/privacy-policy)). The score is an estimate, not proof of how a text was written.
+Text is sent only when someone runs a check. Checks made with an API key are not saved to a check history (see the [privacy policy](https://assetfeed.com/privacy-policy)). The score is an estimate, not proof of how a text was written. English text only for now.
 
 ## Development
 
+From the repository root:
+
 ```sh
 npm install
-npm run build   # dist/aidetector.js and dist/aidetector.min.js
+npm run build   # builds every package
 npm test
 python3 -m http.server 8000   # then open http://localhost:8000/demo/
 ```
