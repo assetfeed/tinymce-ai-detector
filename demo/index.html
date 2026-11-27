@@ -14,10 +14,13 @@
   #tiptap-editor { border: 1px solid #d1d5db; border-radius: 6px 6px 0 0; background: #fff; }
   #tiptap-editor .ProseMirror { min-height: 360px; padding: 16px 20px 16px 28px; outline: none; }
   #tiptap-editor .ProseMirror p { margin: 0 0 12px; }
+  #editorjs-editor { border: 1px solid #d1d5db; border-radius: 6px 6px 0 0; background: #fff; padding: 16px 20px 16px 48px; min-height: 360px; }
+  #editorjs-editor .ce-paragraph { line-height: 1.5; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/tinymce@8.10.2/tinymce.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/hugerte@1.0.15/hugerte.min.js"></script>
 <script src="../packages/tinymce/dist/aidetector.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@editorjs/editorjs@2.31.7/dist/editorjs.umd.js"></script>
 <script type="importmap">
 { "imports": { "@tiptap/core": "https://esm.sh/@tiptap/core@3.35.1", "@tiptap/starter-kit": "https://esm.sh/@tiptap/starter-kit@3.35.1" } }
 </script>
@@ -37,6 +40,9 @@
 
   <h2>Tiptap 3</h2>
   <div id="tiptap-editor"></div>
+
+  <h2>Editor.js 2</h2>
+  <div id="editorjs-editor"></div>
 </main>
 <script>
   const sample = fetch('sample.txt').then((r) => r.text())
@@ -80,6 +86,16 @@
     extensions: [StarterKit, AiDetector.configure({ request: replay })],
     content,
   })
+</script>
+<script type="module">
+  import { AiDetector } from '../packages/editorjs/dist/index.js'
+
+  const text = await sample
+  const blocks = text.trim().split('\n').map((l) => ({ type: 'paragraph', data: { text: l.replace(/&/g, '&amp;').replace(/</g, '&lt;') } }))
+
+  window.editorjsEditor = new EditorJS({ holder: 'editorjs-editor', data: { blocks }, minHeight: 0 })
+  await window.editorjsEditor.isReady
+  window.editorjsDetector = new AiDetector(window.editorjsEditor, { holder: 'editorjs-editor', request: replay })
 </script>
 </body>
 </html>
