@@ -388,6 +388,7 @@ var MarkPainter = class {
     const Observer = this.win.ResizeObserver || window.ResizeObserver;
     this.resize = Observer ? new Observer(this.schedule) : null;
     this.resize?.observe(root);
+    root.addEventListener("scroll", this.schedule, { passive: true });
   }
   listen(on) {
     const method = on ? "addEventListener" : "removeEventListener";
@@ -419,6 +420,13 @@ var MarkPainter = class {
       this.draw();
     });
   }
+  /** A root that scrolls inside its own box cuts the marks off at that box, as it cuts its text. */
+  clip(dx, dy) {
+    const scrolls = this.root.tagName !== "BODY" && /auto|scroll/.test(this.win.getComputedStyle(this.root).overflowY);
+    const r = this.root.getBoundingClientRect();
+    const [l, t2, rt, b] = [r.left + dx, r.top + dy, r.right + dx, r.bottom + dy].map(px);
+    this.layer.style.clipPath = scrolls ? `polygon(${l} ${t2}, ${rt} ${t2}, ${rt} ${b}, ${l} ${b})` : "";
+  }
   ownLineBoxes(el2) {
     const range = this.doc.createRange();
     range.selectNodeContents(el2);
@@ -432,6 +440,7 @@ var MarkPainter = class {
     const out = [];
     if (this.view !== "off" && this.marks.length > 0 && this.root.isConnected) {
       const { dx, dy, barX } = this.place();
+      this.clip(dx, dy);
       const tints = this.view === "highlight";
       let group = null;
       const flush = () => {
@@ -594,6 +603,7 @@ var MarkPainter = class {
     this.area.removeEventListener("pointerleave", this.endHover);
     this.area.removeEventListener("pointerdown", this.closeCard);
     this.root.removeEventListener("input", this.closeCard);
+    this.root.removeEventListener("scroll", this.schedule);
     this.listen(false);
     this.resize?.disconnect();
     if (this.frame) {

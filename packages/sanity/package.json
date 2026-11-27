@@ -1,0 +1,58 @@
+{
+  "name": "@assetfeed/sanity-ai-detector",
+  "version": "0.1.0",
+  "description": "AI detector plugin for Sanity Studio. Marks likely AI-written passages beside the text of Portable Text fields and leaves the document untouched.",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./input": {
+      "import": "./dist/input.js",
+      "default": "./dist/input.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "sanity",
+    "sanity-plugin",
+    "sanity-studio",
+    "portable-text",
+    "ai-detector",
+    "ai-content-detector",
+    "ai-text-detector",
+    "ai-detection",
+    "cms"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/assetfeed/ai-detector-plugins.git",
+    "directory": "packages/sanity"
+  },
+  "homepage": "https://github.com/assetfeed/ai-detector-plugins/tree/main/packages/sanity#readme",
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0",
+    "sanity": "^4.0.0 || ^5.0.0 || ^6.0.0"
+  },
+  "peerDependenciesMeta": {
+    "sanity": {
+      "optional": true
+    }
+  },
+  "scripts": {
+    "build": "esbuild src/index.js src/input.js --bundle --format=esm --external:sanity --external:react --outdir=dist",
+    "test": "node --test test/*.test.js"
+  },
+  "devDependencies": {
+    "@assetfeed/ai-detector-core": "*"
+  },
+  "bugs": {
+    "url": "https://github.com/assetfeed/ai-detector-plugins/issues"
+  }
+}
