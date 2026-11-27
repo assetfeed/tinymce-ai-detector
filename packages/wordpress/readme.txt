@@ -1,6 +1,6 @@
 === AI Detector by AssetFeed ===
 Contributors: assetfeed
-Tags: ai detector, ai content detector, ai writing, content check, editor
+Tags: ai detector, ai content detector, ai detection, content checker, gutenberg
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 7.4
@@ -8,7 +8,7 @@ Stable tag: 0.1.0
 License: MIT
 License URI: https://opensource.org/license/mit
 
-Check a post for AI-written passages. The result sits in the editor sidebar and the marks are drawn beside the text; the post itself is never changed.
+AI content detector for the block and Classic Editor. Marks AI-written passages beside your text; the post is never changed.
 
 == Description ==
 
@@ -20,11 +20,15 @@ AI Detector by AssetFeed checks the text of the post you are editing and shows h
 * **The key stays on your server.** The editor talks to your own site; your site talks to the AssetFeed API.
 * **No tracking, no ads, no "powered by" links.**
 
-English text only for now. A check needs at least a few sentences of text.
+English text only for now. A check needs at least a few sentences of text, and up to 200,000 characters.
 
 = What you need =
 
-An AssetFeed API key. Save it in Settings → AI detector. Checks use your AssetFeed credits.
+An AssetFeed API key. Get one on the AssetFeed API keys page and save it in Settings → AI detector. A free AssetFeed account includes 500 credits a month, and one check costs 5 credits.
+
+= Source and license =
+
+MIT licensed. The source is at https://github.com/assetfeed/ai-detector-plugins/tree/main/packages/wordpress.
 
 == External services ==
 
@@ -33,7 +37,7 @@ This plugin sends text to the AssetFeed AI detector API, a service operated by A
 * **What is sent:** the text of the post you are editing, one line per paragraph or block, together with your API key in a request header. Nothing else about the post, the site or the user is sent.
 * **When:** only when a user with permission to edit the post clicks "Check for AI writing" (or "Recheck"). Nothing is sent when you install or activate the plugin, when you save the key, or while you write.
 * **Where:** `https://api.assetfeed.com/api/v1/ai-detector/checks` (the address can be changed in Settings → AI detector, for example to a proxy of your own).
-* **What the plugin stores:** the API key and the endpoint, as options. The plugin does not store the text or the results.
+* **What is kept:** the plugin stores the API key and the endpoint, as options, and does not store the text or the results. Checks made with an API key are not saved to your AssetFeed history.
 * AssetFeed's terms and privacy policy: [Terms of Service](https://assetfeed.com/terms-of-service), [Privacy Policy](https://assetfeed.com/privacy-policy).
 
 == Installation ==
@@ -55,7 +59,11 @@ No. The editor sends the text to a route of your own site, which adds the key an
 
 = Does it work with the Classic Editor? =
 
-Yes. The box is added to the post screen when the Classic Editor is used, and the marks are drawn in the Visual tab.
+Yes. The box is added to the post screen when the Classic Editor is used, and the marks are drawn in the Visual tab. The Text tab is checked as well, but without marks.
+
+= How much does a check cost? =
+
+One check costs 5 credits. A free AssetFeed account includes 500 credits a month.
 
 = Where is the source code? =
 
