@@ -22,7 +22,7 @@ The marks are drawn in a separate layer beside the text. They never reach the sa
 | Tiptap | [`@assetfeed/tiptap-ai-detector`](packages/tiptap/README.md) ([npm](https://www.npmjs.com/package/@assetfeed/tiptap-ai-detector)) | Tiptap 2.27.3 and 3.35.1 |
 | Editor.js | [`@assetfeed/editorjs-ai-detector`](packages/editorjs/README.md) ([npm](https://www.npmjs.com/package/@assetfeed/editorjs-ai-detector)) | Editor.js 2.31.7 |
 | CKEditor 5 | [`@assetfeed/ckeditor5-ai-detector`](packages/ckeditor5/README.md) | CKEditor 5 42.0.2, 44.3.0, 46.1.1, 47.7.6, 48.5.3 and 49.1.0 |
-| Sanity Studio | [`@assetfeed/sanity-ai-detector`](packages/sanity/README.md) | The Portable Text editor of Sanity 4, 5 and 6, outside a Studio (see the README) |
+| Sanity Studio | [`@assetfeed/sanity-ai-detector`](packages/sanity/README.md) | @portabletext/editor 3.3.14, 6.6.5 and 8.2.17, not run inside a Studio (see the README) |
 
 For Laravel Nova there is a detail-page field in a separate repository: [assetfeed/nova-ai-detector](https://github.com/assetfeed/nova-ai-detector).
 

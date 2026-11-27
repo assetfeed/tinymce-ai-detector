@@ -1,6 +1,6 @@
 {
   "name": "@assetfeed/editorjs-ai-detector",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "AI detector for Editor.js. Marks likely AI-written passages beside the text and leaves the saved data untouched.",
   "license": "MIT",
   "type": "module",

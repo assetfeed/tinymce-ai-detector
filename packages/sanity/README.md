@@ -18,13 +18,9 @@ English text only for now.
 
 ## Tested
 
-A Studio needs a Sanity project to sign in to, which was not available for these checks, so the plugin was not run inside a Studio. It was run on the editor a Studio field uses, [`@portabletext/editor`](https://www.npmjs.com/package/@portabletext/editor), in a page that gives the input the props a Studio field gives it (`value` and `renderDefault`):
+The plugin has not been run inside a Sanity Studio: a Studio needs a Sanity project to sign in to, which was not available for these checks. It was run on the editor a Studio field uses, [`@portabletext/editor`](https://www.npmjs.com/package/@portabletext/editor), in a page that gives the input the props a Studio field gives it (`value` and `renderDefault`), on versions 8.2.17, 6.6.5 and 3.3.14.
 
-- `@portabletext/editor` 8.2.17, the version in Sanity 6.25.0;
-- `@portabletext/editor` 6.6.5, the line used by Sanity 5;
-- `@portabletext/editor` 3.3.14, the line used by Sanity 4.
-
-A Studio built from Sanity 6.25.0 with the plugin in its config started without errors and stopped at its project connection screen. What a Studio adds around the editor (its own wrappers and styles) is not covered. If the marks do not appear in your Studio, please open an issue with the Studio version.
+The package declares `sanity` 4, 5 or 6 as a peer dependency. What a Studio adds around the editor (its own wrappers and styles) is not covered. If the marks do not appear in your Studio, please open an issue with the Studio version.
 
 ## Install
 
@@ -39,7 +35,7 @@ import { aiDetector } from '@assetfeed/sanity-ai-detector'
 
 export default defineConfig({
   // ...
-  plugins: [aiDetector({ endpoint: '/api/ai-check' })], // your server route, see below
+  plugins: [aiDetector({ apiKey: 'YOUR_ASSETFEED_API_KEY' })], // staff-only Studios; see below for a server route
 })
 ```
 
@@ -47,7 +43,7 @@ Every Portable Text field gets the bar. To leave some out, pass `enabled`:
 
 ```js
 aiDetector({
-  endpoint: '/api/ai-check',
+  apiKey: 'YOUR_ASSETFEED_API_KEY',
   enabled: (props) => props.schemaType.name === 'body',
 })
 ```
@@ -56,9 +52,9 @@ The plugin works through `form.components.input`. If you set your own `input` co
 
 ## Connect the detector
 
-Checks spend credits on an AssetFeed account. Free accounts include 500 credits per month, and one check uses 5 credits ([plans](https://assetfeed.com/pricing?utm_source=sanity-ai-detector&utm_medium=readme)). Create an API key at [assetfeed.com/api-keys](https://assetfeed.com/api-keys?utm_source=sanity-ai-detector&utm_medium=readme) and keep it on your server: a key written into the Studio can be read by anyone who opens it.
+Checks spend credits on an AssetFeed account. Free accounts include 500 credits per month, and one check uses 5 credits ([plans](https://assetfeed.com/pricing?utm_source=sanity-ai-detector&utm_medium=readme)). Create an API key at [assetfeed.com/api-keys](https://assetfeed.com/api-keys?utm_source=sanity-ai-detector&utm_medium=readme).
 
-Your server route forwards the request body to the AssetFeed API and adds the key:
+The API accepts calls from any website, so passing the key with `apiKey` works as is. Anyone who opens the Studio can read that key and spend its credits, so do this only in a Studio your own team uses. In a Studio other people can open, set `endpoint` to a route on your server that forwards the request body to the AssetFeed API and adds the key:
 
 ```js
 // Node 18+ (Express)
@@ -72,14 +68,14 @@ app.post('/api/ai-check', express.json(), async (req, res) => {
 })
 ```
 
-Put your own sign-in check in front of that route, otherwise anyone who finds it can spend your credits. A Studio runs in the browser, so the route also has to allow requests from the Studio's origin (CORS).
+Put your own sign-in check in front of that route, otherwise anyone who finds it can spend your credits. A Studio runs in the browser, so if the route is on another origin it has to allow requests from the Studio's origin (CORS).
 
 ## Options
 
 | Option | Default | |
 |---|---|---|
 | `endpoint` | `https://api.assetfeed.com/api/v1/ai-detector/checks` | Where the text is posted as `{ "text": "..." }`. |
-| `apiKey` | `''` | Sent as `X-Api-Token`. Only for internal tools: the key is visible in the Studio. |
+| `apiKey` | `''` | Sent as `X-Api-Token`. Anyone who opens the Studio can read it, so use it only in Studios your own team opens. |
 | `request` | none | `async ({ text }) => answer`: your own transport. Return the `data` object of the API answer. |
 | `bar` | `true` | Show the bar under the editor. |
 | `enabled` | all Portable Text fields | `(inputProps) => boolean`: which fields get the check. |
@@ -104,7 +100,7 @@ Checks made with an API key are not saved to a check history (see the [privacy p
 ```js
 import { AiDetectorInput } from '@assetfeed/sanity-ai-detector/input'
 
-h(AiDetectorInput, { input: { value, renderDefault }, options: { endpoint: '/api/ai-check' } })
+h(AiDetectorInput, { input: { value, renderDefault }, options: { apiKey: 'YOUR_ASSETFEED_API_KEY' } })
 ```
 
 ## Development
