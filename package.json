@@ -1,6 +1,6 @@
 {
   "name": "@assetfeed/tinymce-ai-detector",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "AI detector plugin for TinyMCE and HugeRTE. Marks likely AI-written passages beside the text and leaves the content untouched.",
   "license": "MIT",
   "type": "module",
@@ -36,7 +36,7 @@
   "homepage": "https://github.com/assetfeed/tinymce-ai-detector#readme",
   "peerDependencies": {
     "hugerte": ">=1",
-    "tinymce": ">=8"
+    "tinymce": ">=6"
   },
   "peerDependenciesMeta": {
     "tinymce": {

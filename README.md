@@ -14,7 +14,7 @@ The marks live in a separate layer next to the document, not in it. `getContent(
 
 **[Try the demo](https://assetfeed.github.io/tinymce-ai-detector/demo/)**. It replays a recorded answer for the sample text, so it works without an API key.
 
-Tested on TinyMCE 8.10.2 and HugeRTE 1.0.15, in the classic (iframe) editor. The plugin only uses the public plugin API, so 6 and 7 may work, but we have not run them. Inline editors get the summary notification only. English text only for now.
+Tested on TinyMCE 6.8.6, 7.9.3 and 8.10.2 and on HugeRTE 1.0.15, in the classic (iframe) editor. Inline editors get the summary notification only. English text only for now.
 
 ## Install
 
