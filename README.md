@@ -24,6 +24,8 @@ The marks are drawn in a separate layer beside the text. They never reach the sa
 | CKEditor 5 | [`@assetfeed/ckeditor5-ai-detector`](packages/ckeditor5/README.md) | CKEditor 5 42.0.2, 44.3.0, 46.1.1, 47.7.6, 48.5.3 and 49.1.0 |
 | Sanity Studio | [`@assetfeed/sanity-ai-detector`](packages/sanity/README.md) | @portabletext/editor 3.3.14, 6.6.5 and 8.2.17, not run inside a Studio (see the README) |
 
+For WordPress there is a plugin in [`packages/wordpress`](packages/wordpress/README.md): a sidebar and an options-menu entry in the block editor, and a box in the Classic Editor. It is not on npm; build the zip from source. The API key stays on the WordPress server.
+
 For Laravel Nova there is a detail-page field in a separate repository: [assetfeed/nova-ai-detector](https://github.com/assetfeed/nova-ai-detector).
 
 For Filament there is a view-page entry in a separate repository: [assetfeed/filament-ai-detector](https://github.com/assetfeed/filament-ai-detector).

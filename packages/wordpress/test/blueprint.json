@@ -1,0 +1,17 @@
+{
+  "$schema": "https://playground.wordpress.net/blueprint-schema.json",
+  "landingPage": "/wp-admin/",
+  "preferredVersions": { "php": "8.3", "wp": "latest" },
+  "steps": [
+    {
+      "step": "writeFile",
+      "path": "/wordpress/wp-content/mu-plugins/aid-test.php",
+      "data": "<?php\n// Test helpers: ?classic=1 opens the Classic Editor.\nadd_filter( 'use_block_editor_for_post', static fn( $use ) => isset( $_GET['classic'] ) ? false : $use );\n"
+    },
+    { "step": "activatePlugin", "pluginPath": "ai-detector-by-assetfeed/ai-detector-by-assetfeed.php" },
+    {
+      "step": "runPHP",
+      "code": "<?php\nrequire '/wordpress/wp-load.php';\nupdate_option( 'assetfeed_aid_api_key', 'af_test' );\nupdate_option( 'assetfeed_aid_endpoint', 'http://127.0.0.1:8841/' );\n$lines = array_filter( array_map( 'trim', file( '/wordpress/wp-content/aid-demo/sample.txt' ) ) );\n$blocks = array();\nforeach ( $lines as $line ) {\n\t$html = '<p>' . $line . '</p>';\n\t$blocks[] = array( 'blockName' => 'core/paragraph', 'attrs' => array(), 'innerBlocks' => array(), 'innerHTML' => $html, 'innerContent' => array( $html ) );\n}\n$id = wp_insert_post( array( 'post_title' => 'AI detector test', 'post_status' => 'draft', 'post_content' => serialize_blocks( $blocks ) ) );\nupdate_option( 'aid_test_post', $id );\n"
+    }
+  ]
+}
