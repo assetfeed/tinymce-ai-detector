@@ -1,0 +1,22 @@
+{
+  "name": "@assetfeed/wordpress-ai-detector",
+  "private": true,
+  "version": "0.1.0",
+  "description": "AI detector by AssetFeed for WordPress: block editor sidebar and Classic Editor meta box. Distributed as a WordPress plugin (wordpress.org), not on npm.",
+  "license": "MIT",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/assetfeed/ai-detector-plugins.git",
+    "directory": "packages/wordpress"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "zip": "node scripts/build.mjs --zip",
+    "test": "node --test test/*.test.js",
+    "e2e": "node test/e2e.mjs"
+  },
+  "devDependencies": {
+    "@assetfeed/ai-detector-core": "*"
+  }
+}

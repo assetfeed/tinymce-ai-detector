@@ -1,0 +1,28 @@
+/* The AI bar (shared with the other AssetFeed editor plugins) inside a WordPress panel or meta box.
+   div.aid-wp is more specific than the bar's own rules, which are injected later. */
+div.aid-wp .aid-bar {
+	padding: 0;
+	border-top: 0;
+	background: transparent;
+}
+
+div.aid-wp .aid-badge {
+	max-width: 100%;
+	height: auto;
+	min-height: 30px;
+	padding-top: 4px;
+	padding-bottom: 4px;
+	white-space: normal;
+}
+
+div.aid-wp .aid-when {
+	white-space: normal;
+}
+
+.aid-wp__notice {
+	margin: 0 0 12px;
+}
+
+.aid-wp__hint {
+	margin: 12px 0 0;
+}
