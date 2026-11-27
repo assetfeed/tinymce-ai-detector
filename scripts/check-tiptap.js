@@ -7,7 +7,14 @@ async () => {
   const bar = () => [...document.querySelectorAll('.aid-bar')].find((b) => host.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING)
   const marks = () => ({ b: wrap.querySelectorAll('.aid-marks b').length, i: wrap.querySelectorAll('.aid-marks i').length })
   const html0 = ed.getHTML()
-  const out = { idle: bar()?.innerText.replace(/\n/g, ' | ') }
+  let calls = 0
+  const origFetch = window.fetch
+  window.fetch = (...a) => { calls++; return origFetch(...a) }
+  const can = [ed.can().checkAiWriting(), ed.can().clearAiMarks(), ed.can().setAiMarksView('bars'), ed.can().setAiMarksView('nope')]
+  await new Promise((r) => setTimeout(r, 900))
+  const canNoop = { can, calls, status: ed.storage.aiDetector.status, view: ed.storage.aiDetector.view }
+  window.fetch = origFetch
+  const out = { canNoop, idle: bar()?.innerText.replace(/\n/g, ' | ') }
   ed.commands.checkAiWriting()
   await sleep(1500)
   out.ok = bar()?.innerText.replace(/\n/g, ' | ')

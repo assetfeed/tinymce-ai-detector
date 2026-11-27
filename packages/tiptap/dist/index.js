@@ -669,19 +669,26 @@ var AiDetector = Extension.create({
   },
   addCommands() {
     return {
-      checkAiWriting: () => () => {
-        this.storage.check();
+      // Side effects only when the command really runs: editor.can() calls commands without dispatch.
+      checkAiWriting: () => ({ dispatch }) => {
+        if (dispatch) {
+          this.storage.check();
+        }
         return true;
       },
-      clearAiMarks: () => () => {
-        this.storage.clear();
+      clearAiMarks: () => ({ dispatch }) => {
+        if (dispatch) {
+          this.storage.clear();
+        }
         return true;
       },
-      setAiMarksView: (view) => () => {
+      setAiMarksView: (view) => ({ dispatch }) => {
         if (!VIEWS.includes(view)) {
           return false;
         }
-        this.storage.setView(view);
+        if (dispatch) {
+          this.storage.setView(view);
+        }
         return true;
       }
     };
